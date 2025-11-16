@@ -1,0 +1,22 @@
+MONO = [
+    "Ethylene",
+    "Propylene",
+    "Styrene",
+    "Vinyl chloride",
+    "Terephthalic acid",
+    "Ethylene glycol",
+    "Acrylonitrile",
+    "1,3-Butadiene",
+    "Bisphenol A",
+    "Phosgene",
+    "Hexamethylenediamine",
+    "Adipic acid",
+    "Formaldehyde",
+    "Methyl methacrylate",
+    "Phenol",
+    "Melamine",
+    "Urea",
+    "Lactic acid",
+    "Tetrafluoroethylene",
+    "Epichlorohydrin"
+]
