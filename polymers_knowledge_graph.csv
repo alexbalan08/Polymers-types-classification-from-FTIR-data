@@ -1,0 +1,16 @@
+polymer_label,polymer_name,monomer(s),functional_groups
+PE,Polyethylene,Ethylene,"Alkane chain (C–C, C–H)"
+PP,Polypropylene,Propylene,"Alkane chain (C–C, C–H)"
+PS,Polystyrene,Styrene,"Aromatic ring (C=C), alkane chain"
+PVC,Polyvinyl chloride,Vinyl chloride,"C–Cl, alkane chain"
+PET,Polyethylene terephthalate,Ethylene glycol + Terephthalic acid,"Ester (C=O–O–), aromatic ring"
+PMMA,Polymethyl methacrylate,Methyl methacrylate,"Ester (C=O–O–), alkyl"
+PAN,Polyacrylonitrile,Acrylonitrile,"Nitrile (C≡N), alkane chain"
+PA6,Polyamide 6 (Nylon 6),Caprolactam,"Amide (C=O–NH), alkane chain"
+PA66,Polyamide 66 (Nylon 66),Hexamethylene diamine + Adipic acid,"Amide (C=O–NH), alkane chain"
+PC,Polycarbonate,Bisphenol A + Phosgene,"Carbonate (O–C(=O)–O–), aromatic ring"
+PUR,Polyurethane,Diisocyanate + Polyol,Urethane (C=O–NH–O–)
+PLA,Polylactic acid,Lactic acid,"Ester (C=O–O–), hydroxyl"
+EVA,Polyethylene-vinyl acetate,Ethylene + Vinyl acetate,"Ester (C=O–O–), alkane chain"
+CA,Cellulose acetate,Cellulose + Acetic acid,"Ester (C=O–O–), hydroxyl"
+RUB,Generic Rubber (SBR/NBR/EPDM),Butadiene + Styrene (generic),"C=C, alkene chain, aromatic ring"

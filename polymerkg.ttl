@@ -1,0 +1,264 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix polymerkg: <https://de_novo/polymerkg/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema1: <http://schema.org/> .
+@prefix wd: <https://www.wikidata.org/entity/> .
+@prefix wdprop: <https://www.wikidata.org/prop/direct/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+polymerkg:ChemicalEntity a rdfs:Class .
+
+polymerkg:FunctionalGroup a rdfs:Class ;
+    rdfs:subClassOf polymerkg:ChemicalEntity ;
+    owl:equivalentClass wd:Q898262 .
+
+polymerkg:Monomer a rdfs:Class ;
+    rdfs:subClassOf polymerkg:ChemicalEntity ;
+    owl:equivalentClass wd:Q36494 .
+
+polymerkg:Polymer a rdfs:Class ;
+    rdfs:subClassOf polymerkg:ChemicalEntity ;
+    owl:equivalentClass wd:Q81163 .
+
+<http://de_novo/polymerkg/Cellulose%20acetate> a polymerkg:Polymer ;
+    rdfs:label "Cellulose acetate"^^xsd:string ;
+    polymerkg:hasFunctionalGroup <http://de_novo/polymerkg/Ester%20%28C%3DO%E2%80%93O%E2%80%93%29>,
+        <http://de_novo/polymerkg/hydroxyl> ;
+    polymerkg:hasMonomer <http://de_novo/polymerkg/Acetic%20acid>,
+        <http://de_novo/polymerkg/Cellulose> ;
+    polymerkg:identifier "CA"^^xsd:string .
+
+<http://de_novo/polymerkg/Generic%20Rubber%20%28SBR%2FNBR%2FEPDM%29> a polymerkg:Polymer ;
+    rdfs:label "Generic Rubber (SBR/NBR/EPDM)"^^xsd:string ;
+    polymerkg:hasFunctionalGroup <http://de_novo/polymerkg/C%3DC>,
+        <http://de_novo/polymerkg/alkene%20chain>,
+        <http://de_novo/polymerkg/aromatic%20ring> ;
+    polymerkg:hasMonomer <http://de_novo/polymerkg/Butadiene>,
+        <http://de_novo/polymerkg/Styrene%20%28generic%29> ;
+    polymerkg:identifier "RUB"^^xsd:string .
+
+<http://de_novo/polymerkg/Polyacrylonitrile> a polymerkg:Polymer ;
+    rdfs:label "Polyacrylonitrile"^^xsd:string ;
+    polymerkg:hasFunctionalGroup <http://de_novo/polymerkg/Nitrile%20%28C%E2%89%A1N%29>,
+        <http://de_novo/polymerkg/alkane%20chain> ;
+    polymerkg:hasMonomer <http://de_novo/polymerkg/Acrylonitrile> ;
+    polymerkg:identifier "PAN"^^xsd:string .
+
+<http://de_novo/polymerkg/Polyamide%206%20%28Nylon%206%29> a polymerkg:Polymer ;
+    rdfs:label "Polyamide 6 (Nylon 6)"^^xsd:string ;
+    polymerkg:hasFunctionalGroup <http://de_novo/polymerkg/Amide%20%28C%3DO%E2%80%93NH%29>,
+        <http://de_novo/polymerkg/alkane%20chain> ;
+    polymerkg:hasMonomer <http://de_novo/polymerkg/Caprolactam> ;
+    polymerkg:identifier "PA6"^^xsd:string .
+
+<http://de_novo/polymerkg/Polyamide%2066%20%28Nylon%2066%29> a polymerkg:Polymer ;
+    rdfs:label "Polyamide 66 (Nylon 66)"^^xsd:string ;
+    polymerkg:hasFunctionalGroup <http://de_novo/polymerkg/Amide%20%28C%3DO%E2%80%93NH%29>,
+        <http://de_novo/polymerkg/alkane%20chain> ;
+    polymerkg:hasMonomer <http://de_novo/polymerkg/Adipic%20acid>,
+        <http://de_novo/polymerkg/Hexamethylene%20diamine> ;
+    polymerkg:identifier "PA66"^^xsd:string .
+
+<http://de_novo/polymerkg/Polycarbonate> a polymerkg:Polymer ;
+    rdfs:label "Polycarbonate"^^xsd:string ;
+    polymerkg:hasFunctionalGroup <http://de_novo/polymerkg/Carbonate%20%28O%E2%80%93C%28%3DO%29%E2%80%93O%E2%80%93%29>,
+        <http://de_novo/polymerkg/aromatic%20ring> ;
+    polymerkg:hasMonomer <http://de_novo/polymerkg/Bisphenol%20A>,
+        <http://de_novo/polymerkg/Phosgene> ;
+    polymerkg:identifier "PC"^^xsd:string .
+
+<http://de_novo/polymerkg/Polyethylene> a polymerkg:Polymer ;
+    rdfs:label "Polyethylene"^^xsd:string ;
+    polymerkg:hasFunctionalGroup <http://de_novo/polymerkg/Alkane%20chain%20%28C%E2%80%93C>,
+        <http://de_novo/polymerkg/C%E2%80%93H%29> ;
+    polymerkg:hasMonomer <http://de_novo/polymerkg/Ethylene> ;
+    polymerkg:identifier "PE"^^xsd:string .
+
+<http://de_novo/polymerkg/Polyethylene%20terephthalate> a polymerkg:Polymer ;
+    rdfs:label "Polyethylene terephthalate"^^xsd:string ;
+    polymerkg:hasFunctionalGroup <http://de_novo/polymerkg/Ester%20%28C%3DO%E2%80%93O%E2%80%93%29>,
+        <http://de_novo/polymerkg/aromatic%20ring> ;
+    polymerkg:hasMonomer <http://de_novo/polymerkg/Ethylene%20glycol>,
+        <http://de_novo/polymerkg/Terephthalic%20acid> ;
+    polymerkg:identifier "PET"^^xsd:string .
+
+<http://de_novo/polymerkg/Polyethylene-vinyl%20acetate> a polymerkg:Polymer ;
+    rdfs:label "Polyethylene-vinyl acetate"^^xsd:string ;
+    polymerkg:hasFunctionalGroup <http://de_novo/polymerkg/Ester%20%28C%3DO%E2%80%93O%E2%80%93%29>,
+        <http://de_novo/polymerkg/alkane%20chain> ;
+    polymerkg:hasMonomer <http://de_novo/polymerkg/Ethylene>,
+        <http://de_novo/polymerkg/Vinyl%20acetate> ;
+    polymerkg:identifier "EVA"^^xsd:string .
+
+<http://de_novo/polymerkg/Polylactic%20acid> a polymerkg:Polymer ;
+    rdfs:label "Polylactic acid"^^xsd:string ;
+    polymerkg:hasFunctionalGroup <http://de_novo/polymerkg/Ester%20%28C%3DO%E2%80%93O%E2%80%93%29>,
+        <http://de_novo/polymerkg/hydroxyl> ;
+    polymerkg:hasMonomer <http://de_novo/polymerkg/Lactic%20acid> ;
+    polymerkg:identifier "PLA"^^xsd:string .
+
+<http://de_novo/polymerkg/Polymethyl%20methacrylate> a polymerkg:Polymer ;
+    rdfs:label "Polymethyl methacrylate"^^xsd:string ;
+    polymerkg:hasFunctionalGroup <http://de_novo/polymerkg/Ester%20%28C%3DO%E2%80%93O%E2%80%93%29>,
+        <http://de_novo/polymerkg/alkyl> ;
+    polymerkg:hasMonomer <http://de_novo/polymerkg/Methyl%20methacrylate> ;
+    polymerkg:identifier "PMMA"^^xsd:string .
+
+<http://de_novo/polymerkg/Polypropylene> a polymerkg:Polymer ;
+    rdfs:label "Polypropylene"^^xsd:string ;
+    polymerkg:hasFunctionalGroup <http://de_novo/polymerkg/Alkane%20chain%20%28C%E2%80%93C>,
+        <http://de_novo/polymerkg/C%E2%80%93H%29> ;
+    polymerkg:hasMonomer <http://de_novo/polymerkg/Propylene> ;
+    polymerkg:identifier "PP"^^xsd:string .
+
+<http://de_novo/polymerkg/Polystyrene> a polymerkg:Polymer ;
+    rdfs:label "Polystyrene"^^xsd:string ;
+    polymerkg:hasFunctionalGroup <http://de_novo/polymerkg/Aromatic%20ring%20%28C%3DC%29>,
+        <http://de_novo/polymerkg/alkane%20chain> ;
+    polymerkg:hasMonomer <http://de_novo/polymerkg/Styrene> ;
+    polymerkg:identifier "PS"^^xsd:string .
+
+<http://de_novo/polymerkg/Polyurethane> a polymerkg:Polymer ;
+    rdfs:label "Polyurethane"^^xsd:string ;
+    polymerkg:hasFunctionalGroup <http://de_novo/polymerkg/Urethane%20%28C%3DO%E2%80%93NH%E2%80%93O%E2%80%93%29> ;
+    polymerkg:hasMonomer <http://de_novo/polymerkg/Diisocyanate>,
+        <http://de_novo/polymerkg/Polyol> ;
+    polymerkg:identifier "PUR"^^xsd:string .
+
+<http://de_novo/polymerkg/Polyvinyl%20chloride> a polymerkg:Polymer ;
+    rdfs:label "Polyvinyl chloride"^^xsd:string ;
+    polymerkg:hasFunctionalGroup <http://de_novo/polymerkg/C%E2%80%93Cl>,
+        <http://de_novo/polymerkg/alkane%20chain> ;
+    polymerkg:hasMonomer <http://de_novo/polymerkg/Vinyl%20chloride> ;
+    polymerkg:identifier "PVC"^^xsd:string .
+
+rdfs:label rdfs:domain polymerkg:ChemicalEntity ;
+    rdfs:range xsd:string .
+
+polymerkg:hasFunctionalGroup a rdf:Property ;
+    rdfs:domain polymerkg:Polymer ;
+    rdfs:range polymerkg:FunctionalGroup .
+
+polymerkg:hasMonomer a rdf:Property ;
+    rdfs:domain polymerkg:Polymer ;
+    rdfs:range polymerkg:Monomer ;
+    owl:equivalentProperty wdprop:P4600 .
+
+polymerkg:identifier a rdf:Property ;
+    rdfs:domain polymerkg:Polymer ;
+    rdfs:range xsd:string ;
+    owl:equivalentProperty schema1:identifier .
+
+<http://de_novo/polymerkg/Acetic%20acid> a polymerkg:Monomer ;
+    rdfs:label "Acetic acid"^^xsd:string .
+
+<http://de_novo/polymerkg/Acrylonitrile> a polymerkg:Monomer ;
+    rdfs:label "Acrylonitrile"^^xsd:string .
+
+<http://de_novo/polymerkg/Adipic%20acid> a polymerkg:Monomer ;
+    rdfs:label "Adipic acid"^^xsd:string .
+
+<http://de_novo/polymerkg/Aromatic%20ring%20%28C%3DC%29> a polymerkg:FunctionalGroup ;
+    rdfs:label "Aromatic ring (C=C)"^^xsd:string .
+
+<http://de_novo/polymerkg/Bisphenol%20A> a polymerkg:Monomer ;
+    rdfs:label "Bisphenol A"^^xsd:string .
+
+<http://de_novo/polymerkg/Butadiene> a polymerkg:Monomer ;
+    rdfs:label "Butadiene"^^xsd:string .
+
+<http://de_novo/polymerkg/C%3DC> a polymerkg:FunctionalGroup ;
+    rdfs:label "C=C"^^xsd:string .
+
+<http://de_novo/polymerkg/C%E2%80%93Cl> a polymerkg:FunctionalGroup ;
+    rdfs:label "C–Cl"^^xsd:string .
+
+<http://de_novo/polymerkg/Caprolactam> a polymerkg:Monomer ;
+    rdfs:label "Caprolactam"^^xsd:string .
+
+<http://de_novo/polymerkg/Carbonate%20%28O%E2%80%93C%28%3DO%29%E2%80%93O%E2%80%93%29> a polymerkg:FunctionalGroup ;
+    rdfs:label "Carbonate (O–C(=O)–O–)"^^xsd:string .
+
+<http://de_novo/polymerkg/Cellulose> a polymerkg:Monomer ;
+    rdfs:label "Cellulose"^^xsd:string .
+
+<http://de_novo/polymerkg/Diisocyanate> a polymerkg:Monomer ;
+    rdfs:label "Diisocyanate"^^xsd:string .
+
+<http://de_novo/polymerkg/Ethylene%20glycol> a polymerkg:Monomer ;
+    rdfs:label "Ethylene glycol"^^xsd:string .
+
+<http://de_novo/polymerkg/Hexamethylene%20diamine> a polymerkg:Monomer ;
+    rdfs:label "Hexamethylene diamine"^^xsd:string .
+
+<http://de_novo/polymerkg/Lactic%20acid> a polymerkg:Monomer ;
+    rdfs:label "Lactic acid"^^xsd:string .
+
+<http://de_novo/polymerkg/Methyl%20methacrylate> a polymerkg:Monomer ;
+    rdfs:label "Methyl methacrylate"^^xsd:string .
+
+<http://de_novo/polymerkg/Nitrile%20%28C%E2%89%A1N%29> a polymerkg:FunctionalGroup ;
+    rdfs:label "Nitrile (C≡N)"^^xsd:string .
+
+<http://de_novo/polymerkg/Phosgene> a polymerkg:Monomer ;
+    rdfs:label "Phosgene"^^xsd:string .
+
+<http://de_novo/polymerkg/Polyol> a polymerkg:Monomer ;
+    rdfs:label "Polyol"^^xsd:string .
+
+<http://de_novo/polymerkg/Propylene> a polymerkg:Monomer ;
+    rdfs:label "Propylene"^^xsd:string .
+
+<http://de_novo/polymerkg/Styrene> a polymerkg:Monomer ;
+    rdfs:label "Styrene"^^xsd:string .
+
+<http://de_novo/polymerkg/Styrene%20%28generic%29> a polymerkg:Monomer ;
+    rdfs:label "Styrene (generic)"^^xsd:string .
+
+<http://de_novo/polymerkg/Terephthalic%20acid> a polymerkg:Monomer ;
+    rdfs:label "Terephthalic acid"^^xsd:string .
+
+<http://de_novo/polymerkg/Urethane%20%28C%3DO%E2%80%93NH%E2%80%93O%E2%80%93%29> a polymerkg:FunctionalGroup ;
+    rdfs:label "Urethane (C=O–NH–O–)"^^xsd:string .
+
+<http://de_novo/polymerkg/Vinyl%20acetate> a polymerkg:Monomer ;
+    rdfs:label "Vinyl acetate"^^xsd:string .
+
+<http://de_novo/polymerkg/Vinyl%20chloride> a polymerkg:Monomer ;
+    rdfs:label "Vinyl chloride"^^xsd:string .
+
+<http://de_novo/polymerkg/alkene%20chain> a polymerkg:FunctionalGroup ;
+    rdfs:label "alkene chain"^^xsd:string .
+
+<http://de_novo/polymerkg/alkyl> a polymerkg:FunctionalGroup ;
+    rdfs:label "alkyl"^^xsd:string .
+
+schema1:identifier a rdf:Property .
+
+wdprop:P4600 a rdf:Property .
+
+<http://de_novo/polymerkg/Alkane%20chain%20%28C%E2%80%93C> a polymerkg:FunctionalGroup ;
+    rdfs:label "Alkane chain (C–C"^^xsd:string .
+
+<http://de_novo/polymerkg/Amide%20%28C%3DO%E2%80%93NH%29> a polymerkg:FunctionalGroup ;
+    rdfs:label "Amide (C=O–NH)"^^xsd:string .
+
+<http://de_novo/polymerkg/C%E2%80%93H%29> a polymerkg:FunctionalGroup ;
+    rdfs:label "C–H)"^^xsd:string .
+
+<http://de_novo/polymerkg/Ethylene> a polymerkg:Monomer ;
+    rdfs:label "Ethylene"^^xsd:string .
+
+<http://de_novo/polymerkg/hydroxyl> a polymerkg:FunctionalGroup ;
+    rdfs:label "hydroxyl"^^xsd:string .
+
+<http://de_novo/polymerkg/aromatic%20ring> a polymerkg:FunctionalGroup ;
+    rdfs:label "aromatic ring"^^xsd:string .
+
+<http://de_novo/polymerkg/Ester%20%28C%3DO%E2%80%93O%E2%80%93%29> a polymerkg:FunctionalGroup ;
+    rdfs:label "Ester (C=O–O–)"^^xsd:string .
+
+<http://de_novo/polymerkg/alkane%20chain> a polymerkg:FunctionalGroup ;
+    rdfs:label "alkane chain"^^xsd:string .
+
