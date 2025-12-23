@@ -1,3 +1,4 @@
 *.zip filter=lfs diff=lfs merge=lfs -text
 *.csv filter=lfs diff=lfs merge=lfs -text
 merged_postprocessed_FTIR.csv filter=lfs diff=lfs merge=lfs -text
+data/*.csv filter=lfs diff=lfs merge=lfs -text
