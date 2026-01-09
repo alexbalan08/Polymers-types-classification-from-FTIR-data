@@ -13,6 +13,8 @@ class SMILESDecoder(tf.keras.layers.Layer):
         self.norms1 = []
         self.norms2 = []
 
+        # One input + Convolutional
+
         for _ in range(num_layers):
             self.self_attn.append(
                 tf.keras.layers.MultiHeadAttention(

@@ -1,4 +1,5 @@
-# src/data/ftir_dataset.py
+#Loads FTIR CSV → numpy array (spectra)
+
 import pandas as pd
 import numpy as np
 

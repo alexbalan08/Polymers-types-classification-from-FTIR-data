@@ -1,4 +1,4 @@
-# src/data/data_module.py
+# Combines FTIR + SMILES, builds (X, Y)
 import tensorflow as tf
 
 class FTIRToSMILESDataModule:

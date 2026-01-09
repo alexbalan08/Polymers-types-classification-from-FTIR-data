@@ -1,4 +1,4 @@
-# src/data/monomer_mapping.py
+# Maps plastics → monomers
 import pandas as pd
 
 class MonomerMapping:
