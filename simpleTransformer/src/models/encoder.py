@@ -15,6 +15,9 @@ class FTIREncoder(tf.keras.layers.Layer):
             )
             for _ in range(num_layers)
         ]
+
+        # TODO: Feed Forward Layer needed? Add additional batch normalization for each as well. Use "dropout"
+
         self.norms = [tf.keras.layers.LayerNormalization() for _ in range(num_layers)]
 
     def call(self, x, training=False):

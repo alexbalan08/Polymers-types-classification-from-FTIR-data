@@ -50,25 +50,23 @@ print("X shape before flattening:", X.shape)  # (samples, features, 1)
 if isinstance(X, tf.Tensor):
     X = X.numpy()
 
-# Flatten last dimension
-n_samples = X.shape[0]
-X_flat = X.reshape(n_samples, -1)
-print("X shape after flattening:", X_flat.shape)  # (samples, features)
+# Move to ftir_dataset + add train/ test splitting
+
+X_flat = X
 
 # --------------------------
 # 2. Scale and reduce dimensionality
 # --------------------------
-scaler = StandardScaler().fit(X_flat)
-X_scaled = scaler.transform(X_flat)
+X_scaled = StandardScaler().fit_transform(X_flat)
 
-pca = PCA(n_components=256).fit(X_scaled)
+pca = PCA(n_components=200).fit(X_scaled)
 X_pca = pca.transform(X_scaled)
-print("X_pca shape:", X_pca.shape)  # (samples, 256)
+print("X_pca shape:", X_pca.shape)
 
-# Save scaler and PCA for prediction
-os.makedirs("checkpoints", exist_ok=True)
-joblib.dump(scaler, SCALER_PATH)
-joblib.dump(pca, PCA_PATH)
+#X2 = StandardScaler().fit_transform(X)
+
+#max_comp = min(X2.shape[0] - 1, X2.shape[1])
+#pca = PCA(n_components=max_comp, random_state=0).fit(X2)
 
 # --------------------------
 # 3. Build model
@@ -86,6 +84,7 @@ dataset = dataset.shuffle(1000).batch(BATCH_SIZE)
 # --------------------------
 # 5. Compile model
 # --------------------------
+# TODO: Fix padding - Needs to be the same everywhere. Cannot clash with other values.
 loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, ignore_class=0)
 optimizer = tf.keras.optimizers.Adam(1e-3)
 model.compile(optimizer=optimizer, loss=loss_fn)
@@ -94,7 +93,7 @@ model.compile(optimizer=optimizer, loss=loss_fn)
 # 6. Train model
 # --------------------------
 print(f"Training on {BATCH_SIZE} batch(es) for {EPOCHS} epoch(s)...")
-model.fit(dataset.take(5), epochs=EPOCHS, verbose=2)
+model.fit(dataset, epochs=EPOCHS, verbose=2)
 
 # --------------------------
 # 7. Save model weights

@@ -1,4 +1,7 @@
 import tensorflow as tf
+# TODO: Padding Mask
+# TODO: Missing autoregressive part
+# TODO: Loss calculation needs to be here
 
 class FTIRToSMILESTransformer(tf.keras.Model):
     def __init__(self, encoder, decoder):

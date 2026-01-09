@@ -24,6 +24,7 @@ class FTIRDataset:
 
         self.plastics = self.df["Substance"].astype(str).values
 
+
     def _is_float(self, s):
         try:
             float(s)

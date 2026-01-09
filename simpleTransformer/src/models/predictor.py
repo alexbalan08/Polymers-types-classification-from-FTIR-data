@@ -28,7 +28,7 @@ class FTIRMonomerPredictor:
         """
         Scale and reduce FTIR spectrum to match training input shape
         ftir_spectrum : (1761, ) or (1761, 1)
-        Returns : (1, 256) float32
+        Returns : (1, 200) float32
         """
         # Flatten if needed
         if ftir_spectrum.ndim == 2 and ftir_spectrum.shape[1] == 1:
