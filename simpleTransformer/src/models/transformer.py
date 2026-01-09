@@ -1,5 +1,7 @@
-# src/models/transformer.py
 import tensorflow as tf
+# TODO: Padding Mask
+# TODO: Missing autoregressive part
+# TODO: Loss calculation needs to be here
 
 class FTIRToSMILESTransformer(tf.keras.Model):
     def __init__(self, encoder, decoder):
@@ -8,12 +10,7 @@ class FTIRToSMILESTransformer(tf.keras.Model):
         self.decoder = decoder
 
     def call(self, inputs, training=False):
-        """
-        Accepts a tuple: (FTIR_tensor, target_tokens)
-        FTIR_tensor: (batch, seq_len, 1)
-        target_tokens: (batch, target_len)
-        """
-        if isinstance(inputs, tuple) or isinstance(inputs, list):
+        if isinstance(inputs, (tuple, list)):
             x, y = inputs
         else:
             raise ValueError("Input to model must be a tuple: (FTIR, target_tokens)")

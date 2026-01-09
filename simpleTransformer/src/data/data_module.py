@@ -1,8 +1,8 @@
-# src/data/data_module.py
+# Combines FTIR + SMILES, builds (X, Y)
 import tensorflow as tf
 
 class FTIRToSMILESDataModule:
-    def __init__(self, ftir_ds, monomer_map, tokenizer, max_len=256):
+    def __init__(self, ftir_ds, monomer_map, tokenizer, max_len=200):
         self.ftir_ds = ftir_ds
         self.monomer_map = monomer_map
         self.tokenizer = tokenizer
@@ -20,9 +20,12 @@ class FTIRToSMILESDataModule:
             if not smiles_list:
                 continue
 
-            target = "<SEP>".join(smiles_list)
-            X.append(spectrum)
-            Y.append(target)
+            for smiles in smiles_list:
+                #target = "<SEP>".join(smiles_list)
+                X.append(spectrum)
+                Y.append(smiles)
+
+            # TODO: Predict one monomer at a time! Loop over/ append every monomer per spectra
 
         # Fit tokenizer
         self.tokenizer.fit(Y)
@@ -32,7 +35,7 @@ class FTIRToSMILESDataModule:
             self._pad(self.tokenizer.encode(y)) for y in Y
         ]
 
-        X = tf.expand_dims(tf.constant(X), -1)
+        X = tf.constant(X)
         Y = tf.constant(Y_encoded)
 
         return X, Y

@@ -26,10 +26,15 @@ class SMILESDecoder(tf.keras.layers.Layer):
                     key_dim=d_model // num_heads
                 )
             )
+
+            # TODO: FeedForward Layer missing. Needs batch normalization and dropout
+
             self.norms1.append(tf.keras.layers.LayerNormalization())
             self.norms2.append(tf.keras.layers.LayerNormalization())
 
         self.out = tf.keras.layers.Dense(vocab_size)
+
+    # TODO: Padding Mask? Logic for ignoring the padding
 
     def call(self, y, enc, training=False):
         # y: (batch, target_len)

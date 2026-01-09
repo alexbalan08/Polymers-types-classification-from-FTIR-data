@@ -1,4 +1,5 @@
-# src/data/ftir_dataset.py
+#Loads FTIR CSV → numpy array (spectra)
+
 import pandas as pd
 import numpy as np
 
@@ -22,6 +23,7 @@ class FTIRDataset:
         )
 
         self.plastics = self.df["Substance"].astype(str).values
+
 
     def _is_float(self, s):
         try:
