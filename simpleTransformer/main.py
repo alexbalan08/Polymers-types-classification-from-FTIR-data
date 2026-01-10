@@ -2,7 +2,7 @@ import os
 import tensorflow as tf
 from src.data.ftir_dataset import FTIRDataset
 from src.data.monomer_mapping import MonomerMapping
-from src.data.smiles_tokenizer import SMILESTokenizer
+from src.data.smiles_tokenizer import SMILESTokenizer, RDKitSMILESTokenizer
 from src.data.data_module import FTIRToSMILESDataModule
 from src.models.encoder import FTIREncoder
 from src.models.decoder import SMILESDecoder
@@ -31,7 +31,7 @@ ftir_ds = FTIRDataset(FTIR_CSV)
 ftir_ds.load()
 
 mapping = MonomerMapping(PLASTIC_MONOMER_CSV, MONOMERS_PUBCHEM_CSV)
-tokenizer = SMILESTokenizer()
+tokenizer = RDKitSMILESTokenizer()
 
 data_module = FTIRToSMILESDataModule(
     ftir_ds=ftir_ds,
@@ -60,7 +60,7 @@ model = FTIRToSMILESTransformer(encoder, decoder)
 # 4. Prepare dataset for training
 # --------------------------
 dataset = tf.data.Dataset.from_tensor_slices(((X, Y[:, :-1]), Y[:, 1:]))
-dataset = dataset.shuffle(1000).batch(BATCH_SIZE)
+dataset = dataset.take(5).batch(BATCH_SIZE)
 
 # --------------------------
 # 5. Compile model
