@@ -121,3 +121,9 @@ class RDKitSMILESTokenizer:
     @property
     def vocab_size(self):
         return len(self.token2idx)
+
+    def token_to_id(self, token):
+        return self.token2idx.get(token, self.token2idx["<UNK>"])
+
+    def id_to_token(self, idx):
+        return self.idx2token.get(idx, "<UNK>")

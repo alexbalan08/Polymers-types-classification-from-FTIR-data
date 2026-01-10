@@ -25,22 +25,10 @@ class FTIRMonomerPredictor:
         self.EOS = tokenizer.token_to_id("<EOS>")
 
     def preprocess(self, ftir_spectrum):
-        """
-        Scale and reduce FTIR spectrum to match training input shape
-        ftir_spectrum : (1761, ) or (1761, 1)
-        Returns : (1, 200) float32
-        """
-        # Flatten if needed
-        if ftir_spectrum.ndim == 2 and ftir_spectrum.shape[1] == 1:
-            ftir_spectrum = ftir_spectrum.flatten()
-
-        # Scale
-        ftir_scaled = self.scaler.transform([ftir_spectrum])
-
-        # PCA
-        ftir_pca = self.pca.transform(ftir_scaled)
-
-        return ftir_pca.astype(np.float32)
+        # Safety wrapper - this method might not even be needed anymore
+        if ftir_spectrum.ndim == 1:
+            ftir_spectrum = ftir_spectrum.reshape(1, -1)
+        return ftir_spectrum.astype(np.float32)
 
     def predict(self, ftir_spectrum, debug=False):
         """
