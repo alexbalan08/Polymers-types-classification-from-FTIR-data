@@ -54,7 +54,7 @@ if isinstance(Y, tf.Tensor):
 # TODO: Mitigate class imbalances?
 
 # --------------------------
-# 2. Train/test split (FIXED)
+# 2. Train/test split
 # --------------------------
 
 # IMPORTANT:
@@ -76,6 +76,15 @@ X_train, X_test, Y_train, Y_test = train_test_split(
     shuffle=True,
     stratify=plastic_labels
 )
+
+#from sklearn.model_selection import StratifiedKFold
+
+#cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=0)
+
+#folds = []
+#for fold_id, (train_idx, val_idx) in enumerate(cv.split(X, y), start=1):
+#    folds.append((train_idx, val_idx))
+#    print(f"Fold {fold_id}: train={len(train_idx)}, val={len(val_idx)}")
 
 print(f"Training samples: {X_train.shape[0]}, Test samples: {X_test.shape[0]}")
 
