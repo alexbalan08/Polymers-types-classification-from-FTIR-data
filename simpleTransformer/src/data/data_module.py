@@ -9,6 +9,7 @@ class FTIRToSMILESDataModule:
         self.monomer_map = monomer_map
         self.tokenizer = tokenizer
         self.max_len = max_len
+        self.plastic_names_used = []
 
         self.scaler = StandardScaler()
         self.pca = PCA(n_components=n_pca)
@@ -26,9 +27,12 @@ class FTIRToSMILESDataModule:
                 continue
 
             for smiles in smiles_list:
-                #target = "<SEP>".join(smiles_list)
+                # target = "<SEP>".join(smiles_list)
                 X.append(spectrum)
                 Y.append(smiles)
+
+                # Track which plastic this sample came from
+                self.plastic_names_used.append(plastic)
 
             # TODO: Predict one monomer at a time! Loop over/ append every monomer per spectra
 
