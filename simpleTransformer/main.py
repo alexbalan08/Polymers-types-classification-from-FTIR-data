@@ -8,9 +8,6 @@ from src.models.encoder import FTIREncoder
 from src.models.decoder import SMILESDecoder
 from src.models.transformer import FTIRToSMILESTransformer
 from src.models.predictor import FTIRMonomerPredictor
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-import joblib
 
 # --------------------------
 # CONFIGURATION
@@ -50,23 +47,7 @@ print("X shape before flattening:", X.shape)  # (samples, features, 1)
 if isinstance(X, tf.Tensor):
     X = X.numpy()
 
-# Move to ftir_dataset + add train/ test splitting
-
-X_flat = X
-
-# --------------------------
-# 2. Scale and reduce dimensionality
-# --------------------------
-X_scaled = StandardScaler().fit_transform(X_flat)
-
-pca = PCA(n_components=200).fit(X_scaled)
-X_pca = pca.transform(X_scaled)
-print("X_pca shape:", X_pca.shape)
-
-#X2 = StandardScaler().fit_transform(X)
-
-#max_comp = min(X2.shape[0] - 1, X2.shape[1])
-#pca = PCA(n_components=max_comp, random_state=0).fit(X2)
+# TODO: Add train/test splitting
 
 # --------------------------
 # 3. Build model
@@ -78,7 +59,7 @@ model = FTIRToSMILESTransformer(encoder, decoder)
 # --------------------------
 # 4. Prepare dataset for training
 # --------------------------
-dataset = tf.data.Dataset.from_tensor_slices(((X_pca, Y[:, :-1]), Y[:, 1:]))
+dataset = tf.data.Dataset.from_tensor_slices(((X, Y[:, :-1]), Y[:, 1:]))
 dataset = dataset.shuffle(1000).batch(BATCH_SIZE)
 
 # --------------------------

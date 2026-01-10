@@ -1,12 +1,17 @@
 # Combines FTIR + SMILES, builds (X, Y)
 import tensorflow as tf
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 
 class FTIRToSMILESDataModule:
-    def __init__(self, ftir_ds, monomer_map, tokenizer, max_len=200):
+    def __init__(self, ftir_ds, monomer_map, tokenizer, max_len=200, n_pca=200):
         self.ftir_ds = ftir_ds
         self.monomer_map = monomer_map
         self.tokenizer = tokenizer
         self.max_len = max_len
+
+        self.scaler = StandardScaler()
+        self.pca = PCA(n_components=n_pca)
 
     def build(self):
         X = []
@@ -36,9 +41,14 @@ class FTIRToSMILESDataModule:
         ]
 
         X = tf.constant(X)
+        X_np = X.numpy()
+
+        X_scaled = self.scaler.fit_transform(X_np)
+        X_pca = self.pca.fit_transform(X_scaled)
+
         Y = tf.constant(Y_encoded)
 
-        return X, Y
+        return X_pca, Y
 
     def _pad(self, seq):
         seq = seq[: self.max_len]
