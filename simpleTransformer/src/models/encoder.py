@@ -1,11 +1,10 @@
-from .ftir_frontend import FTIRFrontend
 from .positional_encoding import PositionalEncoding
 import tensorflow as tf
 
 class FTIREncoder(tf.keras.layers.Layer):
-    def __init__(self, d_model=128, num_heads=4, num_layers=2, target_len=200, d_ff=512, dropout=0.1):
+    def __init__(self, d_model=128, num_heads=4, num_layers=2, dropout=0.1):
         super().__init__()
-        self.frontend = FTIRFrontend(d_model=d_model, target_len=target_len)
+        self.proj = tf.keras.layers.Dense(d_model)
         self.pos = PositionalEncoding(d_model)
 
         self.layers = [
@@ -23,7 +22,7 @@ class FTIREncoder(tf.keras.layers.Layer):
         # Feed-forward networks (one per layer)
         self.ffn = [
             tf.keras.Sequential([
-                tf.keras.layers.Dense(d_ff, activation="relu"),
+                tf.keras.layers.Dense(d_model, activation="relu"),
                 tf.keras.layers.Dense(d_model),
             ])
             for _ in range(num_layers)
@@ -39,7 +38,8 @@ class FTIREncoder(tf.keras.layers.Layer):
         self.dropouts_ffn = [tf.keras.layers.Dropout(dropout) for _ in range(num_layers)]
 
     def call(self, x, training=False):
-        x = self.frontend(x)  # (batch, target_len, d_model)
+        x = tf.expand_dims(x, -1)  # (batch, 200, 1)
+        x = self.proj(x)  # (batch, 200, token_size)
         x = self.pos(x)
 
         # Multi-head self attention layer

@@ -2,7 +2,7 @@ import tensorflow as tf
 from .positional_encoding import PositionalEncoding
 
 class SMILESDecoder(tf.keras.layers.Layer):
-    def __init__(self, vocab_size, d_model=128, num_heads=4, num_layers=2, d_ff=512, dropout=0.1):
+    def __init__(self, vocab_size, d_model=128, num_heads=4, num_layers=2, dropout=0.1):
         super().__init__()
 
         self.embed = tf.keras.layers.Embedding(vocab_size, d_model)
@@ -42,7 +42,7 @@ class SMILESDecoder(tf.keras.layers.Layer):
             # Standard Transformer Feed-Forward Network
             self.ffn.append(
                 tf.keras.Sequential([
-                    tf.keras.layers.Dense(d_ff, activation="relu"),
+                    tf.keras.layers.Dense(d_model, activation="relu"),
                     tf.keras.layers.Dense(d_model),
                 ])
             )
@@ -55,7 +55,7 @@ class SMILESDecoder(tf.keras.layers.Layer):
             self.dropouts2.append(tf.keras.layers.Dropout(dropout))
             self.dropouts3.append(tf.keras.layers.Dropout(dropout))
 
-        self.out = tf.keras.layers.Dense(vocab_size)
+        self.out = tf.keras.layers.Dense(vocab_size, activation="softmax")
 
     # TODO: Padding Mask? Logic for ignoring the padding
 

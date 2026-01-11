@@ -18,8 +18,14 @@ FTIR_CSV = "data/merged_postprocessed_FTIR.csv"
 PLASTIC_MONOMER_CSV = "data/monomers - plastics to monomers.csv"
 MONOMERS_PUBCHEM_CSV = "data/monomers - Monomers PubChem.csv"
 
-MAX_LEN = 64
-BATCH_SIZE = 100
+D_MODEL=32
+NUM_HEADS=4
+NUM_LAYERS=2
+DROP_RATE=0.1
+
+MAX_LEN = 48
+BATCH_SIZE = 64
+LEARNING_RATE = 1e-3
 EPOCHS = 100
 
 MODEL_SAVE_PATH = "checkpoints/ftir_transformer.weights.h5"
@@ -44,12 +50,7 @@ data_module = FTIRToSMILESDataModule(
 
 X, Y = data_module.build()
 print("X shape before flattening:", X.shape)  # (samples, features, 1)
-
-# Convert to NumPy if it's a TF tensor
-if isinstance(X, tf.Tensor):
-    X = X.numpy()
-if isinstance(Y, tf.Tensor):
-    Y = Y.numpy()
+print("Max number of tokens:     ", (Y == 0).argmax(axis=1).max())
 
 # TODO: Mitigate class imbalances?
 
@@ -94,8 +95,8 @@ print(f"Training samples: {X_train.shape[0]}, Test samples: {X_test.shape[0]}")
 # --------------------------
 # 3. Build model
 # --------------------------
-encoder = FTIREncoder()
-decoder = SMILESDecoder(vocab_size=tokenizer.vocab_size)
+encoder = FTIREncoder(d_model=D_MODEL, num_heads=NUM_HEADS, num_layers=NUM_LAYERS, dropout=DROP_RATE)
+decoder = SMILESDecoder(vocab_size=tokenizer.vocab_size, d_model=D_MODEL, num_heads=NUM_HEADS, num_layers=NUM_LAYERS, dropout=DROP_RATE)
 model = FTIRToSMILESTransformer(encoder, decoder)
 
 # --------------------------
@@ -114,14 +115,14 @@ test_dataset = test_dataset.batch(BATCH_SIZE)
 # --------------------------
 # TODO: Fix padding - Needs to be the same everywhere. Cannot clash with other values.
 loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, ignore_class=0)
-optimizer = tf.keras.optimizers.Adam(1e-3)
+optimizer = tf.keras.optimizers.Adam(LEARNING_RATE)
 model.compile(optimizer=optimizer, loss=loss_fn)
 
 # --------------------------
 # 6. Train model
 # --------------------------
 print(f"Training on {X_train.shape[0]} samples, validating on {X_test.shape[0]} samples for {EPOCHS} epoch(s)...")
-model.fit(train_dataset, validation_data=test_dataset, epochs=EPOCHS, verbose=2)
+history = model.fit(train_dataset, validation_data=test_dataset, epochs=EPOCHS, verbose=1)
 
 # --------------------------
 # 7. Save model weights

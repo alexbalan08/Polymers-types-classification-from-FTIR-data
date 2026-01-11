@@ -1,4 +1,5 @@
 # Combines FTIR + SMILES, builds (X, Y)
+import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -44,13 +45,11 @@ class FTIRToSMILESDataModule:
             self._pad(self.tokenizer.encode(y)) for y in Y
         ]
 
-        X = tf.constant(X)
-        X_np = X.numpy()
-
+        X_np = np.asarray(X)
         X_scaled = self.scaler.fit_transform(X_np)
         X_pca = self.pca.fit_transform(X_scaled)
 
-        Y = tf.constant(Y_encoded)
+        Y = np.array(Y_encoded)
 
         return X_pca, Y
 
