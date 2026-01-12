@@ -46,8 +46,8 @@ class FTIRToSMILESDataModule:
         Y_encoded = [self._pad(self.tokenizer.encode(y)) for y in Y]
 
         # Convert X → PCA
-        X = np.asarray(X)
-        X_scaled = self.scaler.fit_transform(X)
+        X_np = np.asarray(X)
+        X_scaled = self.scaler.fit_transform(X_np)
         X_pca = self.pca.fit_transform(X_scaled)
 
         # Plastic labels for stratification
