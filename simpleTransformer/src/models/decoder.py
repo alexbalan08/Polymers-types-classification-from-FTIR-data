@@ -42,7 +42,9 @@ class SMILESDecoder(tf.keras.layers.Layer):
             # Standard Transformer Feed-Forward Network
             self.ffn.append(
                 tf.keras.Sequential([
+                    # TODO: Which of these two lines is correct here?
                     tf.keras.layers.Dense(d_model, activation="relu"),
+                    #tf.keras.layers.Dense(d_ff, activation="relu"),
                     tf.keras.layers.Dense(d_model),
                 ])
             )

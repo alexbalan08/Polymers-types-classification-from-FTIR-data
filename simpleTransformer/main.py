@@ -3,35 +3,70 @@ import tensorflow as tf
 import numpy as np
 from src.data.ftir_dataset import FTIRDataset
 from src.data.monomer_mapping import MonomerMapping
-from src.data.smiles_tokenizer import SMILESTokenizer, RDKitSMILESTokenizer
+from src.data.smiles_tokenizer import RDKitSMILESTokenizer
 from src.data.data_module import FTIRToSMILESDataModule
-from src.models.encoder import FTIREncoder
-from src.models.decoder import SMILESDecoder
-from src.models.transformer import FTIRToSMILESTransformer
 from src.models.predictor import FTIRMonomerPredictor
-from sklearn.model_selection import train_test_split
+from src.training.train_helper import train_cross_validation
+from datetime import datetime
+import csv
 
 # --------------------------
-# CONFIGURATION
+# CONFIG
 # --------------------------
 FTIR_CSV = "data/merged_postprocessed_FTIR.csv"
 PLASTIC_MONOMER_CSV = "data/monomers - plastics to monomers.csv"
 MONOMERS_PUBCHEM_CSV = "data/monomers - Monomers PubChem.csv"
 
-D_MODEL=32
-NUM_HEADS=4
-NUM_LAYERS=2
-DROP_RATE=0.1
-
+D_MODEL = 32
+NUM_HEADS = 4
+NUM_LAYERS = 2
+DROP_RATE = 0.1
 MAX_LEN = 48
 BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
-EPOCHS = 100
+EPOCHS = 10
 
-MODEL_SAVE_PATH = "checkpoints/ftir_transformer.weights.h5"
-SCALER_PATH = "checkpoints/ftir_scaler.save"
-PCA_PATH = "checkpoints/ftir_pca.save"
+timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+checkpoint_dir = os.path.join("checkpoints", timestamp)
+os.makedirs(checkpoint_dir, exist_ok=True)
 
+# Update paths to point inside this folder
+MODEL_SAVE_PATH = os.path.join(checkpoint_dir, "ftir_transformer.weights.h5")
+SCALER_PATH = os.path.join(checkpoint_dir, "ftir_scaler.save")
+PCA_PATH = os.path.join(checkpoint_dir, "ftir_pca.save")
+config_csv_path = os.path.join(checkpoint_dir, "config_log.csv")
+history_csv_path = os.path.join(checkpoint_dir, "training_history.csv")
+
+# --------------------------
+# Log configuration
+# --------------------------
+config = {
+    "FTIR_CSV": FTIR_CSV,
+    "PLASTIC_MONOMER_CSV": PLASTIC_MONOMER_CSV,
+    "MONOMERS_PUBCHEM_CSV": MONOMERS_PUBCHEM_CSV,
+    "D_MODEL": D_MODEL,
+    "NUM_HEADS": NUM_HEADS,
+    "NUM_LAYERS": NUM_LAYERS,
+    "DROP_RATE": DROP_RATE,
+    "MAX_LEN": MAX_LEN,
+    "BATCH_SIZE": BATCH_SIZE,
+    "LEARNING_RATE": LEARNING_RATE,
+    "EPOCHS": EPOCHS,
+    "MODEL_SAVE_PATH": MODEL_SAVE_PATH,
+    "SCALER_PATH": SCALER_PATH,
+    "PCA_PATH": PCA_PATH,
+    "TIMESTAMP": timestamp
+}
+
+file_exists = os.path.isfile(config_csv_path)
+
+with open(config_csv_path, mode='a', newline='') as csv_file:
+    writer = csv.DictWriter(csv_file, fieldnames=config.keys())
+    if not file_exists:
+        writer.writeheader()
+    writer.writerow(config)
+
+print(f"Configuration logged to {config_csv_path}")
 # --------------------------
 # 1. Load dataset
 # --------------------------
@@ -49,89 +84,27 @@ data_module = FTIRToSMILESDataModule(
 )
 
 X, Y = data_module.build()
-print("X shape before flattening:", X.shape)  # (samples, features, 1)
+print("X shape before flattening:", X.shape)
 print("Max number of tokens:     ", (Y == 0).argmax(axis=1).max())
 
-# TODO: Mitigate class imbalances?
-
-# --------------------------
-# 2. Train/test split
-# --------------------------
-
-# IMPORTANT:
-# X and Y already correspond to filtered, valid samples
-# We must build labels from the SAME order
-
-plastic_names_used = data_module.plastic_names_used  # must exist
-plastic_labels = np.array(
-    [mapping.get_plastic_id(p) for p in plastic_names_used]
-)
-
+# Stratification labels
+plastic_labels = np.array([mapping.get_plastic_id(p) for p in data_module.plastic_names_used])
 assert len(plastic_labels) == X.shape[0]
 
-X_train, X_test, Y_train, Y_test = train_test_split(
-    X,
-    Y,
-    test_size=0.2,
-    random_state=42,
-    shuffle=True,
-    stratify=plastic_labels
+# --------------------------
+# 2. Train model using helper
+# --------------------------
+model, training_history = train_cross_validation(
+    X, Y, plastic_labels,
+    tokenizer, mapping,
+    n_splits=3,
+    batch_size=BATCH_SIZE,
+    epochs=EPOCHS,
+    model_save_path=MODEL_SAVE_PATH
 )
 
-#from sklearn.model_selection import StratifiedKFold
-
-#cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=0)
-
-#folds = []
-#for fold_id, (train_idx, val_idx) in enumerate(cv.split(X, y), start=1):
-#    folds.append((train_idx, val_idx))
-#    print(f"Fold {fold_id}: train={len(train_idx)}, val={len(val_idx)}")
-
-print(f"Training samples: {X_train.shape[0]}, Test samples: {X_test.shape[0]}")
-
-
-print(f"Training samples: {X_train.shape[0]}, Test samples: {X_test.shape[0]}")
-
 # --------------------------
-# 3. Build model
-# --------------------------
-encoder = FTIREncoder(d_model=D_MODEL, num_heads=NUM_HEADS, num_layers=NUM_LAYERS, dropout=DROP_RATE)
-decoder = SMILESDecoder(vocab_size=tokenizer.vocab_size, d_model=D_MODEL, num_heads=NUM_HEADS, num_layers=NUM_LAYERS, dropout=DROP_RATE)
-model = FTIRToSMILESTransformer(encoder, decoder)
-
-# --------------------------
-# 4. Prepare dataset for training
-# --------------------------
-# Use train/test splits instead of full dataset
-train_dataset = tf.data.Dataset.from_tensor_slices(((X_train, Y_train[:, :-1]), Y_train[:, 1:]))
-test_dataset = tf.data.Dataset.from_tensor_slices(((X_test, Y_test[:, :-1]), Y_test[:, 1:]))
-
-# Shuffle and batch training dataset; batch test dataset
-train_dataset = train_dataset.shuffle(buffer_size=1024).batch(BATCH_SIZE)
-test_dataset = test_dataset.batch(BATCH_SIZE)
-
-# --------------------------
-# 5. Compile model
-# --------------------------
-# TODO: Fix padding - Needs to be the same everywhere. Cannot clash with other values.
-loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, ignore_class=0)
-optimizer = tf.keras.optimizers.Adam(LEARNING_RATE)
-model.compile(optimizer=optimizer, loss=loss_fn)
-
-# --------------------------
-# 6. Train model
-# --------------------------
-print(f"Training on {X_train.shape[0]} samples, validating on {X_test.shape[0]} samples for {EPOCHS} epoch(s)...")
-history = model.fit(train_dataset, validation_data=test_dataset, epochs=EPOCHS, verbose=1)
-
-# --------------------------
-# 7. Save model weights
-# --------------------------
-model.save_weights(MODEL_SAVE_PATH)
-print(f"Model weights saved to {MODEL_SAVE_PATH}")
-
-# --------------------------
-# 8. Use predictor
+# 3. Use predictor
 # --------------------------
 predictor = FTIRMonomerPredictor(
     model=model,
@@ -141,8 +114,6 @@ predictor = FTIRMonomerPredictor(
     max_len=MAX_LEN
 )
 
-# Example prediction
-example_ftir = X[0]  # raw spectrum
+example_ftir = X[0]
 predicted_smiles = predictor.predict(example_ftir, debug=True)
 print(f"Predicted SMILES: {predicted_smiles}")
-
