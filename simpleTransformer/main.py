@@ -9,6 +9,7 @@ from src.models.predictor import FTIRMonomerPredictor
 from src.training.train_helper import train_cross_validation
 from datetime import datetime
 import csv
+import pickle
 
 # --------------------------
 # CONFIG
@@ -84,6 +85,19 @@ data_module = FTIRToSMILESDataModule(
 )
 
 X, Y = data_module.build()
+
+# Save scaler
+with open(SCALER_PATH, "wb") as f:
+    pickle.dump(data_module.scaler, f)
+
+# Save PCA
+with open(PCA_PATH, "wb") as f:
+    pickle.dump(data_module.pca, f)
+
+print(f"Scaler saved to {SCALER_PATH}")
+print(f"PCA saved to {PCA_PATH}")
+
+
 print("X shape before flattening:", X.shape)
 print("Max number of tokens:     ", (Y == 0).argmax(axis=1).max())
 
