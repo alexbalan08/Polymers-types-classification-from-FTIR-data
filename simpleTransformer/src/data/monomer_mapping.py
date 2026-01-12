@@ -22,7 +22,11 @@ class MonomerMapping:
         )
 
         self.smiles_lookup = dict(
-            zip(self.monomer_df["monomer"], self.monomer_df["smiles"])
+            zip(self.monomer_df["monomer"], self.monomer_df["canonical_smiles"])
+        )
+
+        self.selfies_lookup = dict(
+            zip(self.monomer_df["monomer"], self.monomer_df["selfies"])
         )
 
         # -------------------------
@@ -66,9 +70,6 @@ class MonomerMapping:
         monomers = self.get_monomers_for_plastic(plastic)
         smiles = []
 
-        # TODO: Add conversion to canonical smiles
-
-
         for m in monomers:
             if m in self.smiles_lookup:
                 smiles.append(self.smiles_lookup[m])
@@ -77,14 +78,13 @@ class MonomerMapping:
 
     def get_selfies_for_plastic(self, plastic):
         monomers = self.get_monomers_for_plastic(plastic)
-        smiles = []
+        selfies = []
 
-        # TODO: Add conversion to selfies
         for m in monomers:
             if m in self.smiles_lookup:
-                smiles.append(self.smiles_lookup[m])
+                selfies.append(self.selfies_lookup[m])
 
-        return smiles
+        return selfies
 
         # -------------------------
         # NEW HELPER METHODS FOR MAIN.PY
