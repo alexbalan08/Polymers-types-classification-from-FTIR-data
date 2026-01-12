@@ -9,7 +9,6 @@ from src.models.predictor import FTIRMonomerPredictor
 from src.training.train_helper import train_cross_validation
 from datetime import datetime
 import csv
-import pickle
 
 # --------------------------
 # CONFIG
@@ -32,9 +31,6 @@ checkpoint_dir = os.path.join("checkpoints", timestamp)
 os.makedirs(checkpoint_dir, exist_ok=True)
 
 # Update paths to point inside this folder
-MODEL_SAVE_PATH = os.path.join(checkpoint_dir, "ftir_transformer.weights.h5")
-SCALER_PATH = os.path.join(checkpoint_dir, "ftir_scaler.save")
-PCA_PATH = os.path.join(checkpoint_dir, "ftir_pca.save")
 config_csv_path = os.path.join(checkpoint_dir, "config_log.csv")
 history_csv_path = os.path.join(checkpoint_dir, "training_history.csv")
 
@@ -53,9 +49,6 @@ config = {
     "BATCH_SIZE": BATCH_SIZE,
     "LEARNING_RATE": LEARNING_RATE,
     "EPOCHS": EPOCHS,
-    "MODEL_SAVE_PATH": MODEL_SAVE_PATH,
-    "SCALER_PATH": SCALER_PATH,
-    "PCA_PATH": PCA_PATH,
     "TIMESTAMP": timestamp
 }
 
@@ -86,35 +79,14 @@ data_module = FTIRToSMILESDataModule(
 
 X, Y = data_module.build()
 
-# Save scaler
-with open(SCALER_PATH, "wb") as f:
-    pickle.dump(data_module.scaler, f)
-
-# Save PCA
-with open(PCA_PATH, "wb") as f:
-    pickle.dump(data_module.pca, f)
-
-print(f"Scaler saved to {SCALER_PATH}")
-print(f"PCA saved to {PCA_PATH}")
-
-
-print("X shape before flattening:", X.shape)
-print("Max number of tokens:     ", (Y == 0).argmax(axis=1).max())
-
-# Stratification labels
-plastic_labels = np.array([mapping.get_plastic_id(p) for p in data_module.plastic_names_used])
-assert len(plastic_labels) == X.shape[0]
-
 # --------------------------
 # 2. Train model using helper
 # --------------------------
-model, training_history = train_cross_validation(
-    X, Y, plastic_labels,
-    tokenizer, mapping,
+model, (scaler_path, pca_path), training_history, (X_val, Y_val) = train_cross_validation(
+    X, Y, tokenizer, data_module, checkpoint_dir,
     n_splits=3,
     batch_size=BATCH_SIZE,
     epochs=EPOCHS,
-    model_save_path=MODEL_SAVE_PATH
 )
 
 # --------------------------
@@ -123,11 +95,13 @@ model, training_history = train_cross_validation(
 predictor = FTIRMonomerPredictor(
     model=model,
     tokenizer=tokenizer,
-    scaler_path=SCALER_PATH,
-    pca_path=PCA_PATH,
+    scaler_path=scaler_path,
+    pca_path=pca_path,
     max_len=MAX_LEN
 )
 
-example_ftir = X[0]
+example_ftir = X_val[1]
+print("Reduced form spectra:", X_val[1:4])
 predicted_smiles = predictor.predict(example_ftir, debug=True)
 print(f"Predicted SMILES: {predicted_smiles}")
+print(f"True SMILES was:  {Y_val[1:4]}")

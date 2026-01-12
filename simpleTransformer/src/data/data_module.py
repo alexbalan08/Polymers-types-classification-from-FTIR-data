@@ -12,25 +12,26 @@ class FTIRToSMILESDataModule:
         self.monomer_map = monomer_map
         self.tokenizer = tokenizer
         self.max_len = max_len
-
-        self.scaler = StandardScaler()
-        self.pca = PCA(n_components=n_pca)
-
-        # Stored after build
-        self.X = None
-        self.Y = None
-        self.plastic_labels = None
-        self.plastic_names_used = []
+        self.n_pca = n_pca
 
     def build(self):
+        spectra = []
+        plastics = []
+        for spectrum, plastic in zip(self.ftir_ds.get_spectra(), self.ftir_ds.get_plastics()):
+            if "sealing_ring" in plastic:
+                continue
+            smiles_list = self.monomer_map.get_smiles_for_plastic(plastic)
+            if not smiles_list:
+                continue
+            spectra.append(spectrum)
+            plastics.append(plastic)
+
+        return np.asarray(spectra), np.asarray(plastics)
+
+    def transform_data(self, spectra, plastics, pca_objects=None):
         X = []
         Y = []
-        plastic_names = []
-
-        for spectrum, plastic in zip(
-            self.ftir_ds.get_spectra(),
-            self.ftir_ds.get_plastics()
-        ):
+        for spectrum, plastic in zip(spectra, plastics):
             smiles_list = self.monomer_map.get_smiles_for_plastic(plastic)
             if not smiles_list:
                 continue
@@ -38,61 +39,26 @@ class FTIRToSMILESDataModule:
             for smiles in smiles_list:
                 X.append(spectrum)
                 Y.append(smiles)
-                plastic_names.append(plastic)
 
         # Fit tokenizer on ALL targets
         self.tokenizer.fit(Y)
 
         # Encode + pad Y
-        Y_encoded = [self._pad(self.tokenizer.encode(y)) for y in Y]
+        Y = np.asarray([self._pad(self.tokenizer.encode(y)) for y in Y])
+        X = np.asarray(X)
 
         # Convert X → PCA
-        X_np = np.asarray(X)
-        X_scaled = self.scaler.fit_transform(X_np)
-        X_pca = self.pca.fit_transform(X_scaled)
+        if pca_objects is None:
+            scaler = StandardScaler()
+            pca = PCA(n_components=self.n_pca)
+            X_scaled = scaler.fit_transform(X)
+            X_pca = pca.fit_transform(X_scaled)
+            return X_pca, Y, (scaler, pca)
 
-        # Plastic labels for stratification
-        plastic_labels = np.array([
-            self.monomer_map.get_plastic_id(p) for p in plastic_names
-        ])
-
-        # Store internally
-        self.X = X_pca
-        self.Y = np.asarray(Y_encoded)
-        self.plastic_labels = plastic_labels
-        self.plastic_names_used = plastic_names
-
-        return self.X, self.Y
-
-
-            # TODO: Predict one monomer at a time! Loop over/ append every monomer per spectra
-
-    def get_stratified_folds(self, n_splits=3, shuffle=True, random_state=0):
-        """
-        EXACT equivalent of:
-
-        StratifiedKFold(n_splits=3, shuffle=True, random_state=0)
-        """
-        if self.X is None or self.Y is None:
-            raise RuntimeError("Call build_full_dataset() first")
-
-        skf = StratifiedKFold(
-            n_splits=n_splits,
-            shuffle=shuffle,
-            random_state=random_state
-        )
-
-        folds = []
-        for fold_id, (train_idx, val_idx) in enumerate(
-                skf.split(self.X, self.plastic_labels), start=1
-        ):
-            print(
-                f"Fold {fold_id}: "
-                f"train={len(train_idx)}, val={len(val_idx)}"
-            )
-            folds.append((train_idx, val_idx))
-
-        return folds
+        (scaler, pca) = pca_objects
+        X_scaled = scaler.transform(X)
+        X_pca = pca.transform(X_scaled)
+        return X_pca, Y
 
     def _pad(self, seq):
         seq = seq[: self.max_len]
