@@ -77,7 +77,7 @@ def train_cross_validation(
             train_dataset,
             validation_data=val_dataset,
             epochs=epochs,
-            verbose=2
+            verbose=1
         )
 
         # Convert history to DataFrame

@@ -85,12 +85,7 @@ data_module = FTIRToSMILESDataModule(
 
 X, Y = data_module.build()
 print("X shape before flattening:", X.shape)
-
-# Convert to NumPy if needed
-if isinstance(X, tf.Tensor):
-    X = X.numpy()
-if isinstance(Y, tf.Tensor):
-    Y = Y.numpy()
+print("Max number of tokens:     ", (Y == 0).argmax(axis=1).max())
 
 # Stratification labels
 plastic_labels = np.array([mapping.get_plastic_id(p) for p in data_module.plastic_names_used])
