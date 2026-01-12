@@ -87,6 +87,13 @@ model, (scaler_path, pca_path), training_history, (X_val, Y_val) = train_cross_v
     n_splits=3,
     batch_size=BATCH_SIZE,
     epochs=EPOCHS,
+    d_model=D_MODEL,
+    num_heads=NUM_HEADS,
+    num_layers=NUM_LAYERS,
+    drop_rate=DROP_RATE,
+    max_len=MAX_LEN,
+    learning_rate=LEARNING_RATE,
+    do_pretraining=False
 )
 
 # --------------------------
@@ -100,8 +107,8 @@ predictor = FTIRMonomerPredictor(
     max_len=MAX_LEN
 )
 
-example_ftir = X_val[1]
-print("Reduced form spectra:", X_val[1:4])
+example_ftir = X_val[0]
+print("Reduced form spectra:", X_val[0])
 predicted_smiles = predictor.predict(example_ftir, debug=True)
 print(f"Predicted SMILES: {predicted_smiles}")
-print(f"True SMILES was:  {Y_val[1:4]}")
+print(f"True SMILES was:  {Y_val[0]}")
