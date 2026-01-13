@@ -21,7 +21,10 @@ def train_cross_validation(
     drop_rate=0.1,
     max_len=48,
     learning_rate=1e-3,
-    do_pretraining=False
+    do_pretraining=False,
+    X_fp=None,
+    Y_fp=None,
+    pretrain_epochs=3
 ):
     """
     Performs stratified k-fold training on FTIR -> SMILES dataset.
@@ -44,6 +47,47 @@ def train_cross_validation(
         X_train, Y_train, (scaler, pca, kmeans) = data_module.transform_data(X_train, Y_train)
         X_val, Y_val = data_module.transform_data(X_val, Y_val_plastic, pca_objects=(scaler, pca, kmeans))
 
+        # Fingerprint Pretraining
+        if do_pretraining:
+            print(f"Fold {fold_id}: Starting fingerprint pretraining ({len(X_fp)} samples)")
+
+            # Build encoder and decoder for pretraining
+            pretrain_encoder = FTIREncoder(
+                d_model=d_model,
+                num_heads=num_heads,
+                num_layers=num_layers,
+                dropout=drop_rate,
+                is_fp=True
+            )
+            decoder = SMILESDecoder(
+                vocab_size=tokenizer.vocab_size,
+                d_model=d_model,
+                num_heads=num_heads,
+                num_layers=num_layers,
+                dropout=drop_rate
+            )
+
+            pretrain_model = FTIRToSMILESTransformer(pretrain_encoder, decoder)
+
+            # Encode + pad Y_fp
+            Y_fp_encoded = np.asarray([data_module._pad(tokenizer.encode(y)) for y in Y_fp])
+
+            # Create tf.data.Dataset
+            fp_dataset = tf.data.Dataset.from_tensor_slices(
+                ((X_fp, Y_fp_encoded[:, :-1]), Y_fp_encoded[:, 1:])
+            ).shuffle(1024).batch(batch_size)
+
+            # Compile model
+            loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(
+                from_logits=True, ignore_class=0
+            )
+            optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+            pretrain_model.compile(optimizer=optimizer, loss=loss_fn)
+
+            # Train
+            pretrain_model.fit(fp_dataset, epochs=pretrain_epochs, verbose=1)
+            print("Fingerprint pretraining completed!")
+
         # Save scaler
         scaler_path = os.path.join(fold_dir, f"ftir_scaler.save")
         with open(scaler_path, "wb") as f:
@@ -62,20 +106,23 @@ def train_cross_validation(
             d_model=d_model,
             num_heads=num_heads,
             num_layers=num_layers,
-            dropout=drop_rate
-        )
-        decoder = SMILESDecoder(
-            vocab_size=tokenizer.vocab_size,
-            d_model=d_model,
-            num_heads=num_heads,
-            num_layers=num_layers,
-            dropout=drop_rate
+            dropout=drop_rate,
+            is_fp=False
         )
 
-        if do_pretraining:
-            pass
+        if not do_pretraining:
+            decoder = SMILESDecoder(
+                vocab_size=tokenizer.vocab_size,
+                d_model=d_model,
+                num_heads=num_heads,
+                num_layers=num_layers,
+                dropout=drop_rate
+            )
         else:
-            model = FTIRToSMILESTransformer(encoder, decoder)
+            # freeze decoder weights
+            pass
+
+        model = FTIRToSMILESTransformer(encoder, decoder)
 
         # Prepare datasets
         train_dataset = tf.data.Dataset.from_tensor_slices(

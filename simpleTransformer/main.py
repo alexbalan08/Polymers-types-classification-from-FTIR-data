@@ -1,6 +1,7 @@
 import os
 import tensorflow as tf
 import numpy as np
+import pandas as pd
 from src.data.ftir_dataset import FTIRDataset
 from src.data.monomer_mapping import MonomerMapping
 from src.data.smiles_tokenizer import RDKitSMILESTokenizer
@@ -25,6 +26,7 @@ MAX_LEN = 48
 BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
 EPOCHS = 10
+PRETRAIN_EPOCHS = 5
 
 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 checkpoint_dir = os.path.join("checkpoints", timestamp)
@@ -80,6 +82,51 @@ data_module = FTIRToSMILESDataModule(
 X, Y = data_module.build()
 
 # --------------------------
+# 1a. Build fingerprint -> SMILES dataset
+# --------------------------
+print("Building fingerprint dataset for pretraining...")
+
+monomer_df = pd.read_csv(MONOMERS_PUBCHEM_CSV)
+
+fingerprint_column = 'cactvs_fingerprint'
+smiles_column = 'canonical_smiles'
+
+X_fingerprint = []
+Y_fingerprint = []
+
+# Loop over each row in the FTIR CSV dataframe
+for idx, row in monomer_df.iterrows():
+    fp_str = row[fingerprint_column]
+    smiles_list = row[smiles_column]
+
+    # Some entries might have multiple SMILES separated by a delimiter (e.g., ';' or ',')
+    if pd.isna(fp_str) or pd.isna(smiles_list):
+        continue
+
+    # Make sure smiles_list is iterable
+    if isinstance(smiles_list, str):
+        # Split by comma or semicolon if multiple monomers in the row
+        smiles_items = [s.strip() for s in smiles_list.replace(';', ',').split(',')]
+    else:
+        smiles_items = list(smiles_list)
+
+    # Convert fingerprint string to numeric array (0/1)
+    fp_vec = np.array([int(c) for c in fp_str], dtype=float)
+
+    # One entry per canonical SMILES
+    for smiles in smiles_items:
+        if smiles == '':
+            continue
+        X_fingerprint.append(fp_vec)
+        Y_fingerprint.append(smiles)
+
+# Convert to NumPy arrays
+X_fingerprint = np.array(X_fingerprint, dtype=float)
+Y_fingerprint = np.array(Y_fingerprint)
+
+print(f"Fingerprint dataset shape: X={X_fingerprint.shape}, Y={Y_fingerprint.shape}")
+
+# --------------------------
 # 2. Train model using helper
 # --------------------------
 model, (scaler_path, pca_path), training_history, (X_val, Y_val) = train_cross_validation(
@@ -93,7 +140,10 @@ model, (scaler_path, pca_path), training_history, (X_val, Y_val) = train_cross_v
     drop_rate=DROP_RATE,
     max_len=MAX_LEN,
     learning_rate=LEARNING_RATE,
-    do_pretraining=False
+    do_pretraining=True,
+    X_fp=X_fingerprint,
+    Y_fp=Y_fingerprint,
+    pretrain_epochs=PRETRAIN_EPOCHS
 )
 
 # --------------------------
