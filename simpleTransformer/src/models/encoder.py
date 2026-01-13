@@ -2,8 +2,12 @@ from .positional_encoding import PositionalEncoding
 import tensorflow as tf
 
 class FTIREncoder(tf.keras.layers.Layer):
-    def __init__(self, d_model=128, num_heads=4, num_layers=2, dropout=0.1):
+    def __init__(self, d_model=128, num_heads=4, num_layers=2, dropout=0.1, is_fp=False):
         super().__init__()
+        self.is_fp = is_fp
+        if is_fp:
+            self.dim_reduction = tf.keras.layers.Dense(206)
+
         self.proj = tf.keras.layers.Dense(d_model)
         self.pos = PositionalEncoding(d_model)
 
@@ -38,6 +42,9 @@ class FTIREncoder(tf.keras.layers.Layer):
         self.dropouts_ffn = [tf.keras.layers.Dropout(dropout) for _ in range(num_layers)]
 
     def call(self, x, training=False):
+        if self.is_fp:
+            x = self.dim_reduction(x)
+
         x = tf.expand_dims(x, -1)  # (batch, 200, 1)
         x = self.proj(x)  # (batch, 200, token_size)
         x = self.pos(x)
