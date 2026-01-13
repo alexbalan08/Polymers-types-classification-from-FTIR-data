@@ -41,8 +41,8 @@ def train_cross_validation(
         # Data transformations
         X_train, X_val = X[train_idx], X[val_idx]
         Y_train, Y_val_plastic = Y[train_idx], Y[val_idx]
-        X_train, Y_train, (scaler, pca) = data_module.transform_data(X_train, Y_train)
-        X_val, Y_val = data_module.transform_data(X_val, Y_val_plastic, pca_objects=(scaler, pca))
+        X_train, Y_train, (scaler, pca, kmeans) = data_module.transform_data(X_train, Y_train)
+        X_val, Y_val = data_module.transform_data(X_val, Y_val_plastic, pca_objects=(scaler, pca, kmeans))
 
         # Save scaler
         scaler_path = os.path.join(fold_dir, f"ftir_scaler.save")
