@@ -5,6 +5,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.model_selection import StratifiedKFold
+from sklearn.cluster import MiniBatchKMeans
 
 class FTIRToSMILESDataModule:
     def __init__(self, ftir_ds, monomer_map, tokenizer, max_len=200, n_pca=200):
@@ -25,8 +26,21 @@ class FTIRToSMILESDataModule:
                 continue
             spectra.append(spectrum)
             plastics.append(plastic)
+        spectra = np.asarray(spectra)
+        plastics = np.asarray(plastics)
 
-        return np.asarray(spectra), np.asarray(plastics)
+        print("First spectrum BEFORE SNV normalization:", spectra[0])
+
+        # Standard Normal Variate (SNV)
+        mu = spectra.mean(axis=1, keepdims=True)
+        sd = spectra.std(axis=1, keepdims=True) + 1e-12
+        spectra = (spectra - mu) / sd
+
+        # Print the first spectrum after normalization
+        print("First spectrum AFTER SNV normalization:", spectra[0])
+
+
+        return spectra, plastics
 
     def transform_data(self, spectra, plastics, pca_objects=None):
         X = []
@@ -51,14 +65,26 @@ class FTIRToSMILESDataModule:
         if pca_objects is None:
             scaler = StandardScaler()
             pca = PCA(n_components=self.n_pca)
+            kmeans = MiniBatchKMeans(
+                n_clusters=6,
+                random_state=0,
+                batch_size=2048,
+                n_init=10
+            )
             X_scaled = scaler.fit_transform(X)
             X_pca = pca.fit_transform(X_scaled)
-            return X_pca, Y, (scaler, pca)
+            kmeans.fit(X_pca)
+            dist_tr = kmeans.transform(X_pca)
+            X_tr_feat = np.hstack([X_pca, dist_tr])
 
-        (scaler, pca) = pca_objects
+            return X_tr_feat, Y, (scaler, pca, kmeans)
+
+        (scaler, pca, kmeans) = pca_objects
         X_scaled = scaler.transform(X)
         X_pca = pca.transform(X_scaled)
-        return X_pca, Y
+        dist_tr = kmeans.transform(X_pca)
+        X_tr_feat = np.hstack([X_pca, dist_tr])
+        return X_tr_feat, Y
 
     def _pad(self, seq):
         seq = seq[: self.max_len]

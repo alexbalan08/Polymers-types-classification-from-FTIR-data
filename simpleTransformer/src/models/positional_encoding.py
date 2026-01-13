@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 
 class PositionalEncoding(tf.keras.layers.Layer):
-    def __init__(self, d_model, max_len=200):
+    def __init__(self, d_model, max_len=206):
         super().__init__()
         pos = np.arange(max_len)[:, None]
         i = np.arange(d_model)[None, :]
