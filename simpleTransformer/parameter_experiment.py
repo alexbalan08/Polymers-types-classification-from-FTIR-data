@@ -1,11 +1,12 @@
 import os
 import pandas as pd
-import tensorflow as tf
 import numpy as np
 from src.data.ftir_dataset import FTIRDataset
 from src.data.monomer_mapping import MonomerMapping
-from src.data.smiles_tokenizer import RDKitSMILESTokenizer
+from src.data.smiles_tokenizer import SMILESTokenizer
+from src.data.selfies_tokenizer import SELFIESTokenizer
 from src.data.data_module import FTIRToSequenceDataModule
+from src.models.predictor import FTIRMonomerPredictor
 from src.training.train_helper import train_cross_validation
 from datetime import datetime
 import csv
@@ -45,6 +46,8 @@ CONFIGS = [
 ]
 EXP_NAME = "Basic_model_with_clust"
 PRE_TRAIN = False
+POST_PRETRAIN_FREEZE_DECODER = False
+USE_SELFIES = False
 
 DROP_RATE = 0.1
 MAX_LEN = 48
@@ -52,14 +55,16 @@ BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
 EPOCHS = 100
 PRETRAIN_EPOCHS = 25
+PRED_THRESHOLD = 0.10
+TARGET_COL = "selfies" if USE_SELFIES else "canonical_smiles"
 
 def run():
     for d_model, num_heads, num_layers in CONFIGS:
         print("START with:", d_model, num_heads, num_layers)
-        function_train_parameters(d_model, num_heads, num_layers, PRE_TRAIN)
+        function_train_parameters(d_model, num_heads, num_layers, PRE_TRAIN, USE_SELFIES)
 
 
-def function_train_parameters(d_model, num_heads, num_layers, do_pretraining):
+def function_train_parameters(d_model, num_heads, num_layers, do_pretraining, use_selfies):
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     checkpoint_dir = os.path.join("checkpoints", timestamp)
     os.makedirs(checkpoint_dir, exist_ok=True)
@@ -71,13 +76,14 @@ def function_train_parameters(d_model, num_heads, num_layers, do_pretraining):
     ftir_ds.load()
 
     mapping = MonomerMapping(PLASTIC_MONOMER_CSV, MONOMERS_PUBCHEM_CSV)
-    tokenizer = RDKitSMILESTokenizer()
+    tokenizer = SELFIESTokenizer() if use_selfies else SMILESTokenizer()
 
     data_module = FTIRToSequenceDataModule(
         ftir_ds=ftir_ds,
         monomer_map=mapping,
         tokenizer=tokenizer,
-        max_len=MAX_LEN
+        max_len=MAX_LEN,
+        use_selfies=use_selfies
     )
 
     X, Y = data_module.build()
@@ -94,7 +100,7 @@ def function_train_parameters(d_model, num_heads, num_layers, do_pretraining):
         lambda s: np.array(list(s), dtype=int))
     X_fp = np.stack(
         fingerprint_df["cactvs_fingerprint"].to_numpy())  # np.array(fingerprint_df['cactvs_fingerprint'], dtype=float)
-    Y_fp = np.array(fingerprint_df['canonical_smiles'])
+    Y_fp = np.array(fingerprint_df[TARGET_COL])
 
     print(f"Fingerprint dataset shape: X={X_fp.shape}, Y={Y_fp.shape}")
 
@@ -115,7 +121,9 @@ def function_train_parameters(d_model, num_heads, num_layers, do_pretraining):
         do_pretraining=do_pretraining,
         X_fp=X_fp,
         Y_fp=Y_fp,
-        pretrain_epochs=PRETRAIN_EPOCHS
+        pretrain_epochs=PRETRAIN_EPOCHS,
+        freeze_decoder_after_pretrain = POST_PRETRAIN_FREEZE_DECODER,
+        use_selfies=use_selfies,
     )
     end_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
@@ -123,7 +131,7 @@ def function_train_parameters(d_model, num_heads, num_layers, do_pretraining):
     # Log configuration
     # --------------------------
     config = {
-        "EXPERIMENT_NAME": "First round basic model",
+        "EXPERIMENT_NAME": EXP_NAME,
         "FTIR_CSV": FTIR_CSV,
         "PLASTIC_MONOMER_CSV": PLASTIC_MONOMER_CSV,
         "MONOMERS_PUBCHEM_CSV": MONOMERS_PUBCHEM_CSV,
@@ -131,6 +139,7 @@ def function_train_parameters(d_model, num_heads, num_layers, do_pretraining):
         "D_MODEL": d_model,
         "NUM_HEADS": num_heads,
         "NUM_LAYERS": num_layers,
+        "USE_SELFIES": use_selfies,
         "DROP_RATE": DROP_RATE,
         "MAX_LEN": MAX_LEN,
         "BATCH_SIZE": BATCH_SIZE,

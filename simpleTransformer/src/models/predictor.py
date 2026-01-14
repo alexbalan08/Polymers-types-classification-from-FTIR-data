@@ -53,8 +53,9 @@ class FTIRMonomerPredictor:
 
                     # Forward pass
                     logits = self.model((x, y_input), training=False).numpy()
-                    with np.printoptions(precision=3, suppress=True):
-                        print(logits[0, -1])
+                    if debug:
+                        with np.printoptions(precision=3, suppress=True):
+                            print(logits[0, -1])
 
                     # Pick next token
                     # next_token = int(tf.argmax(logits[0, -1]).numpy())
@@ -62,7 +63,8 @@ class FTIRMonomerPredictor:
                     next_tokens = np.where(pred_last_token > threshold)[0]
                     next_tokens = next_tokens[np.argsort(pred_last_token[next_tokens])[::-1]].tolist()
                     next_probs =  pred_last_token[next_tokens].tolist()
-                    print(next_tokens)
+                    if debug:
+                        print(next_tokens)
 
                     if debug:
                         for next_token, next_prob in zip(next_tokens, next_probs):

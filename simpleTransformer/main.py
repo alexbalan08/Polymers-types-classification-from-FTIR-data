@@ -1,10 +1,9 @@
 import os
-import tensorflow as tf
-import numpy as np
 import pandas as pd
+
 from src.data.ftir_dataset import FTIRDataset
 from src.data.monomer_mapping import MonomerMapping
-from src.data.smiles_tokenizer import RDKitSMILESTokenizer
+from src.data.smiles_tokenizer import SMILESTokenizer
 from src.data.selfies_tokenizer import SELFIESTokenizer
 from src.data.data_module import FTIRToSequenceDataModule
 from src.models.predictor import FTIRMonomerPredictor
@@ -18,7 +17,7 @@ import csv
 FTIR_CSV = "data/merged_postprocessed_FTIR.csv"
 PLASTIC_MONOMER_CSV = "data/monomers - plastics to monomers.csv"
 MONOMERS_PUBCHEM_CSV = "data/monomers - Monomers PubChem.csv"
-FINGERPRINT_CSV = "data/monomers - Monomers PubChem.csv"
+FINGERPRINT_CSV = "data/filtered_data_40_50_1272421.csv"
 
 D_MODEL = 32
 NUM_HEADS = 4
@@ -53,6 +52,7 @@ config = {
     "D_MODEL": D_MODEL,
     "NUM_HEADS": NUM_HEADS,
     "NUM_LAYERS": NUM_LAYERS,
+    "USE_SELFIES":USE_SELFIES,
     "DROP_RATE": DROP_RATE,
     "MAX_LEN": MAX_LEN,
     "BATCH_SIZE": BATCH_SIZE,
@@ -78,7 +78,7 @@ ftir_ds.load()
 
 mapping = MonomerMapping(PLASTIC_MONOMER_CSV, MONOMERS_PUBCHEM_CSV)
 # Depending on datatype used
-tokenizer = SELFIESTokenizer() if USE_SELFIES else RDKitSMILESTokenizer()
+tokenizer = SELFIESTokenizer() if USE_SELFIES else SMILESTokenizer()
 
 data_module = FTIRToSequenceDataModule(
     ftir_ds=ftir_ds,
@@ -96,7 +96,7 @@ X, Y = data_module.build()
 print("Building fingerprint dataset for pretraining...")
 
 fingerprint_df = pd.read_csv(FINGERPRINT_CSV)
-#fingerprint_df = fingerprint_df[fingerprint_df["max_tanimoto"] >= 0.60]
+fingerprint_df = fingerprint_df[fingerprint_df["max_tanimoto"] >= 0.60]
 
 fingerprint_df["cactvs_fingerprint"] = fingerprint_df["cactvs_fingerprint"].apply(lambda s: np.array(list(s), dtype=int))
 X_fp = np.stack(fingerprint_df["cactvs_fingerprint"].to_numpy())  # np.array(fingerprint_df['cactvs_fingerprint'], dtype=float)
@@ -137,9 +137,28 @@ predictor = FTIRMonomerPredictor(
     max_len=MAX_LEN
 )
 
-example_ftir = X_val[0]
-print("Reduced form spectra:", X_val[0])
-predicted_instances, probs = predictor.predict(example_ftir, PRED_THRESHOLD, debug=True)
-for target_instance, p in zip(predicted_instances, probs):
-    print(f"Predicted Instances (conf={p:5.3f}): {target_instance}")
-print(f"True Instance/-s was/were:  {Y_val[0]}")
+store_x = []
+store_y = []
+store_pred = []
+store_probs = []
+
+for xv, yv in zip(X_val, Y_val):
+    # example_ftir = X_val[0]
+    # print("Reduced form spectra:", X_val[0])
+    predicted_molecules, probs = predictor.predict(xv, PRED_THRESHOLD, debug=False)
+    # for smile, p in zip(predicted_molecules, probs):
+    #     print(f"Predicted SMILES (conf={p:5.3f}): {smile}")
+    # print(f"True SMILES was:  {Y_val[0]}")
+
+    store_x = [xv]
+    store_y = [yv]
+    store_pred = [predicted_molecules]
+    store_probs = [probs]
+
+prediction_df = pd.DataFrame({
+    "X_val": store_x,
+    "Y_val": store_y,
+    "prediction": store_pred,
+    "probabilities": store_probs,
+})
+prediction_df.to_csv(os.path.join(checkpoint_dir, "prediction.csv"), index=False)

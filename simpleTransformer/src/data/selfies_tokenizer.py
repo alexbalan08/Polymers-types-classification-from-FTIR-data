@@ -1,8 +1,7 @@
 import re
 
 # Matches full SELFIES tokens like [C], [=C], [Branch1_1], [Ring2], etc.
-SELFIES_TOKEN_PATTERN = re.compile(r"(\[[^\[\]]+\])")
-
+SELFIES_TOKEN_PATTERN = re.compile(r"(\[[^\[\]]+\]|\.)")
 
 def tokenize_selfies(selfies):
     tokens = SELFIES_TOKEN_PATTERN.findall(selfies)
