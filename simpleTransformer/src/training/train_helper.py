@@ -24,7 +24,8 @@ def train_cross_validation(
     do_pretraining=False,
     X_fp=None,
     Y_fp=None,
-    pretrain_epochs=3
+    pretrain_epochs=3,
+    freeze_decoder_after_pretrain=True
 ):
     """
     Performs stratified k-fold training on FTIR -> SMILES dataset.
@@ -140,9 +141,10 @@ def train_cross_validation(
                 num_layers=num_layers,
                 dropout=drop_rate
             )
-        else:
+        else if freeze_decoder_after_pretrain:
             # freeze decoder weights
-            pass
+            # optional parameter
+            decoder.set_trainable(False)
 
         model = FTIRToSMILESTransformer(encoder, decoder)
 

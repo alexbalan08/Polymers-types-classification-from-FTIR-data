@@ -93,3 +93,39 @@ class SMILESDecoder(tf.keras.layers.Layer):
             y = n3(y + ffn_out)
 
         return self.out(y)
+
+    def set_trainable(self, trainable: bool):
+        """Freeze or unfreeze all sublayers of the decoder."""
+        # Embeddings
+        self.embed.trainable = trainable
+        # Positional encoding (if it has trainable parameters)
+        if hasattr(self.pos, "trainable"):
+            self.pos.trainable = trainable
+        # Output dense layer
+        self.out.trainable = trainable
+
+        # Loop through all transformer layers
+        for sa, ca, ffn, n1, n2, n3, d1, d2, d3 in zip(
+                self.self_attn,
+                self.cross_attn,
+                self.ffn,
+                self.norms1,
+                self.norms2,
+                self.norms3,
+                self.dropouts1,
+                self.dropouts2,
+                self.dropouts3,
+        ):
+            # Attention layers
+            sa.trainable = trainable
+            ca.trainable = trainable
+            # Feed-forward networks
+            ffn.trainable = trainable
+            # LayerNorms
+            n1.trainable = trainable
+            n2.trainable = trainable
+            n3.trainable = trainable
+            # Dropouts (no trainable weights, but for consistency)
+            d1.trainable = trainable
+            d2.trainable = trainable
+            d3.trainable = trainable

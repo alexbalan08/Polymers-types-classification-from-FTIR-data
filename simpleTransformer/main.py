@@ -29,6 +29,7 @@ LEARNING_RATE = 1e-3
 EPOCHS = 10
 PRETRAIN_EPOCHS = 5
 PRED_THRESHOLD = 0.10
+POST_PRETRAIN_FREEZE_DECODER = True
 
 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 checkpoint_dir = os.path.join("checkpoints", timestamp)
@@ -115,7 +116,8 @@ model, (scaler_path, pca_path), training_history, (X_val, Y_val) = train_cross_v
     do_pretraining=True,
     X_fp=X_fp,
     Y_fp=Y_fp,
-    pretrain_epochs=PRETRAIN_EPOCHS
+    pretrain_epochs=PRETRAIN_EPOCHS,
+    freeze_decoder_after_pretrain=POST_PRETRAIN_FREEZE_DECODER
 )
 
 # --------------------------
