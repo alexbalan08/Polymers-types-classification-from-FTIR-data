@@ -17,6 +17,7 @@ import csv
 FTIR_CSV = "data/merged_postprocessed_FTIR.csv"
 PLASTIC_MONOMER_CSV = "data/monomers - plastics to monomers.csv"
 MONOMERS_PUBCHEM_CSV = "data/monomers - Monomers PubChem.csv"
+FINGERPRINT_CSV = "data/filtered_data_40_50_1272421.csv"
 
 D_MODEL = 32
 NUM_HEADS = 4
@@ -43,6 +44,7 @@ config = {
     "FTIR_CSV": FTIR_CSV,
     "PLASTIC_MONOMER_CSV": PLASTIC_MONOMER_CSV,
     "MONOMERS_PUBCHEM_CSV": MONOMERS_PUBCHEM_CSV,
+    "FINGERPRINT_CSV": FINGERPRINT_CSV,
     "D_MODEL": D_MODEL,
     "NUM_HEADS": NUM_HEADS,
     "NUM_LAYERS": NUM_LAYERS,
@@ -86,45 +88,14 @@ X, Y = data_module.build()
 # --------------------------
 print("Building fingerprint dataset for pretraining...")
 
-monomer_df = pd.read_csv(MONOMERS_PUBCHEM_CSV)
+fingerprint_df = pd.read_csv(FINGERPRINT_CSV)
+fingerprint_df = fingerprint_df[fingerprint_df["max_tanimoto"] >= 0.60]
 
-fingerprint_column = 'cactvs_fingerprint'
-smiles_column = 'canonical_smiles'
+fingerprint_df["cactvs_fingerprint"] = fingerprint_df["cactvs_fingerprint"].apply(lambda s: np.array(list(s), dtype=int))
+X_fp = np.stack(fingerprint_df["cactvs_fingerprint"].to_numpy())  # np.array(fingerprint_df['cactvs_fingerprint'], dtype=float)
+Y_fp = np.array(fingerprint_df['canonical_smiles'])
 
-X_fingerprint = []
-Y_fingerprint = []
-
-# Loop over each row in the FTIR CSV dataframe
-for idx, row in monomer_df.iterrows():
-    fp_str = row[fingerprint_column]
-    smiles_list = row[smiles_column]
-
-    # Some entries might have multiple SMILES separated by a delimiter (e.g., ';' or ',')
-    if pd.isna(fp_str) or pd.isna(smiles_list):
-        continue
-
-    # Make sure smiles_list is iterable
-    if isinstance(smiles_list, str):
-        # Split by comma or semicolon if multiple monomers in the row
-        smiles_items = [s.strip() for s in smiles_list.replace(';', ',').split(',')]
-    else:
-        smiles_items = list(smiles_list)
-
-    # Convert fingerprint string to numeric array (0/1)
-    fp_vec = np.array([int(c) for c in fp_str], dtype=float)
-
-    # One entry per canonical SMILES
-    for smiles in smiles_items:
-        if smiles == '':
-            continue
-        X_fingerprint.append(fp_vec)
-        Y_fingerprint.append(smiles)
-
-# Convert to NumPy arrays
-X_fingerprint = np.array(X_fingerprint, dtype=float)
-Y_fingerprint = np.array(Y_fingerprint)
-
-print(f"Fingerprint dataset shape: X={X_fingerprint.shape}, Y={Y_fingerprint.shape}")
+print(f"Fingerprint dataset shape: X={X_fp.shape}, Y={Y_fp.shape}")
 
 # --------------------------
 # 2. Train model using helper
@@ -141,8 +112,8 @@ model, (scaler_path, pca_path), training_history, (X_val, Y_val) = train_cross_v
     max_len=MAX_LEN,
     learning_rate=LEARNING_RATE,
     do_pretraining=True,
-    X_fp=X_fingerprint,
-    Y_fp=Y_fingerprint,
+    X_fp=X_fp,
+    Y_fp=Y_fp,
     pretrain_epochs=PRETRAIN_EPOCHS
 )
 

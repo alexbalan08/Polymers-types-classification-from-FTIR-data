@@ -4,7 +4,7 @@ import pickle
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, train_test_split
 from src.models.encoder import FTIREncoder
 from src.models.decoder import SMILESDecoder
 from src.models.transformer import FTIRToSMILESTransformer
@@ -47,6 +47,19 @@ def train_cross_validation(
         X_train, Y_train, (scaler, pca, kmeans) = data_module.transform_data(X_train, Y_train)
         X_val, Y_val = data_module.transform_data(X_val, Y_val_plastic, pca_objects=(scaler, pca, kmeans))
 
+        # Save scaler
+        scaler_path = os.path.join(fold_dir, f"ftir_scaler.save")
+        with open(scaler_path, "wb") as f:
+            pickle.dump(scaler, f)
+
+        # Save PCA
+        pca_path = os.path.join(fold_dir, "ftir_pca.save")
+        with open(pca_path, "wb") as f:
+            pickle.dump(pca, f)
+
+        print(f"Scaler saved to {scaler_path}")
+        print(f"PCA saved to {pca_path}")
+
         # Fingerprint Pretraining
         if do_pretraining:
             print(f"Fold {fold_id}: Starting fingerprint pretraining ({len(X_fp)} samples)")
@@ -72,10 +85,21 @@ def train_cross_validation(
             # Encode + pad Y_fp
             Y_fp_encoded = np.asarray([data_module._pad(tokenizer.encode(y)) for y in Y_fp])
 
+            # Split
+            X_fp_train, X_fp_test, Y_fp_train, Y_fp_test = train_test_split(
+                X_fp, Y_fp_encoded,
+                test_size=0.05,  # fraction of data for test set
+                random_state=67,  # for reproducibility
+                shuffle=True  # shuffle before splitting
+            )
+
             # Create tf.data.Dataset
             fp_dataset = tf.data.Dataset.from_tensor_slices(
-                ((X_fp, Y_fp_encoded[:, :-1]), Y_fp_encoded[:, 1:])
+                ((X_fp_train, Y_fp_train[:, :-1]), Y_fp_train[:, 1:])
             ).shuffle(1024).batch(batch_size)
+            fp_val_dataset = tf.data.Dataset.from_tensor_slices(
+                ((X_fp_test, Y_fp_test[:, :-1]), Y_fp_test[:, 1:])
+            ).batch(batch_size)
 
             # Compile model
             loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(
@@ -85,21 +109,19 @@ def train_cross_validation(
             pretrain_model.compile(optimizer=optimizer, loss=loss_fn)
 
             # Train
-            pretrain_model.fit(fp_dataset, epochs=pretrain_epochs, verbose=1)
+            history = pretrain_model.fit(
+                fp_dataset,
+                validation_data=fp_val_dataset,
+                epochs=pretrain_epochs,
+                verbose=1
+            )
             print("Fingerprint pretraining completed!")
 
-        # Save scaler
-        scaler_path = os.path.join(fold_dir, f"ftir_scaler.save")
-        with open(scaler_path, "wb") as f:
-            pickle.dump(scaler, f)
-
-        # Save PCA
-        pca_path = os.path.join(fold_dir, "ftir_pca.save")
-        with open(pca_path, "wb") as f:
-            pickle.dump(pca, f)
-
-        print(f"Scaler saved to {scaler_path}")
-        print(f"PCA saved to {pca_path}")
+            # Convert history to DataFrame
+            hist_df = pd.DataFrame(history.history)
+            hist_df['fold'] = f"pre{fold_id}"
+            hist_df['epoch'] = range(1, len(hist_df) + 1)
+            loss_histories.append(hist_df)
 
         # Build model
         encoder = FTIREncoder(
