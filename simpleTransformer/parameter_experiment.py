@@ -5,7 +5,7 @@ import numpy as np
 from src.data.ftir_dataset import FTIRDataset
 from src.data.monomer_mapping import MonomerMapping
 from src.data.smiles_tokenizer import RDKitSMILESTokenizer
-from src.data.data_module import FTIRToSMILESDataModule
+from src.data.data_module import FTIRToSequenceDataModule
 from src.training.train_helper import train_cross_validation
 from datetime import datetime
 import csv
@@ -73,7 +73,7 @@ def function_train_parameters(d_model, num_heads, num_layers, do_pretraining):
     mapping = MonomerMapping(PLASTIC_MONOMER_CSV, MONOMERS_PUBCHEM_CSV)
     tokenizer = RDKitSMILESTokenizer()
 
-    data_module = FTIRToSMILESDataModule(
+    data_module = FTIRToSequenceDataModule(
         ftir_ds=ftir_ds,
         monomer_map=mapping,
         tokenizer=tokenizer,

@@ -6,8 +6,8 @@ import numpy as np
 import tensorflow as tf
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from src.models.encoder import FTIREncoder
-from src.models.decoder import SMILESDecoder
-from src.models.transformer import FTIRToSMILESTransformer
+from src.models.decoder import SequenceDecoder
+from src.models.transformer import FTIRToSequenceTransformer
 
 def train_cross_validation(
     X, Y, tokenizer, data_module, checkpoint_dir,
@@ -25,7 +25,8 @@ def train_cross_validation(
     X_fp=None,
     Y_fp=None,
     pretrain_epochs=3,
-    freeze_decoder_after_pretrain=True
+    freeze_decoder_after_pretrain=True,
+    use_selfies=False,
 ):
     """
     Performs stratified k-fold training on FTIR -> SMILES dataset.
@@ -73,7 +74,7 @@ def train_cross_validation(
                 dropout=drop_rate,
                 is_fp=True
             )
-            decoder = SMILESDecoder(
+            decoder = SequenceDecoder(
                 vocab_size=tokenizer.vocab_size,
                 d_model=d_model,
                 num_heads=num_heads,
@@ -81,7 +82,7 @@ def train_cross_validation(
                 dropout=drop_rate
             )
 
-            pretrain_model = FTIRToSMILESTransformer(pretrain_encoder, decoder)
+            pretrain_model = FTIRToSequenceTransformer(pretrain_encoder, decoder)
 
             # Encode + pad Y_fp
             Y_fp_encoded = np.asarray([data_module._pad(tokenizer.encode(y)) for y in Y_fp])
@@ -134,7 +135,7 @@ def train_cross_validation(
         )
 
         if not do_pretraining:
-            decoder = SMILESDecoder(
+            decoder = SequenceDecoder(
                 vocab_size=tokenizer.vocab_size,
                 d_model=d_model,
                 num_heads=num_heads,
@@ -146,7 +147,7 @@ def train_cross_validation(
             # optional parameter
             decoder.set_trainable(False)
 
-        model = FTIRToSMILESTransformer(encoder, decoder)
+        model = FTIRToSequenceTransformer(encoder, decoder)
 
         # Prepare datasets
         train_dataset = tf.data.Dataset.from_tensor_slices(

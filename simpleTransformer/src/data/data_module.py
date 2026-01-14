@@ -7,13 +7,14 @@ from sklearn.decomposition import PCA
 from sklearn.model_selection import StratifiedKFold
 from sklearn.cluster import MiniBatchKMeans
 
-class FTIRToSMILESDataModule:
-    def __init__(self, ftir_ds, monomer_map, tokenizer, max_len=200, n_pca=200):
+class FTIRToSequenceDataModule:
+    def __init__(self, ftir_ds, monomer_map, tokenizer, max_len=200, n_pca=200, use_selfies=False):
         self.ftir_ds = ftir_ds
         self.monomer_map = monomer_map
         self.tokenizer = tokenizer
         self.max_len = max_len
         self.n_pca = n_pca
+        self.use_selfies = use_selfies
 
     def build(self):
         spectra = []
@@ -21,8 +22,12 @@ class FTIRToSMILESDataModule:
         for spectrum, plastic in zip(self.ftir_ds.get_spectra(), self.ftir_ds.get_plastics()):
             if "sealing_ring" in plastic:
                 continue
-            smiles_list = self.monomer_map.get_smiles_for_plastic(plastic)
-            if not smiles_list:
+            seq_list = []
+            if self.use_selfies:
+                seq_list = self.monomer_map.get_selfies_for_plastic(plastic)
+            else:
+                seq_list = self.monomer_map.get_smiles_for_plastic(plastic)
+            if not seq_list:
                 continue
             spectra.append(spectrum)
             plastics.append(plastic)
@@ -46,13 +51,17 @@ class FTIRToSMILESDataModule:
         X = []
         Y = []
         for spectrum, plastic in zip(spectra, plastics):
-            smiles_list = self.monomer_map.get_smiles_for_plastic(plastic)
-            if not smiles_list:
+            seq_list = []
+            if self.use_selfies:
+                seq_list = self.monomer_map.get_selfies_for_plastic(plastic)
+            else:
+                seq_list = self.monomer_map.get_smiles_for_plastic(plastic)
+            if not seq_list:
                 continue
 
-            for smiles in smiles_list:
+            for seq in seq_list:
                 X.append(spectrum)
-                Y.append(smiles)
+                Y.append(seq)
 
         # Fit tokenizer on ALL targets
         self.tokenizer.fit(Y)

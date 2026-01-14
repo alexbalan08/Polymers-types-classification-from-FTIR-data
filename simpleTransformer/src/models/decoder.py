@@ -1,7 +1,7 @@
 import tensorflow as tf
 from .positional_encoding import PositionalEncoding
 
-class SMILESDecoder(tf.keras.layers.Layer):
+class SequenceDecoder(tf.keras.layers.Layer):
     def __init__(self, vocab_size, d_model=128, num_heads=4, num_layers=2, dropout=0.1):
         super().__init__()
 

@@ -6,7 +6,7 @@ import joblib
 class FTIRMonomerPredictor:
     def __init__(self, model, tokenizer, scaler_path, pca_path, max_len=64):
         """
-        model       : trained FTIRToSMILESTransformer
+        model       : trained FTIRToSequenceTransformer
         tokenizer   : SMILESTokenizer with token_to_id() and id_to_token() methods
         scaler_path : path to StandardScaler
         pca_path    : path to PCA

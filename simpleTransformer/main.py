@@ -5,7 +5,8 @@ import pandas as pd
 from src.data.ftir_dataset import FTIRDataset
 from src.data.monomer_mapping import MonomerMapping
 from src.data.smiles_tokenizer import RDKitSMILESTokenizer
-from src.data.data_module import FTIRToSMILESDataModule
+from src.data.selfies_tokenizer import SELFIESTokenizer
+from src.data.data_module import FTIRToSequenceDataModule
 from src.models.predictor import FTIRMonomerPredictor
 from src.training.train_helper import train_cross_validation
 from datetime import datetime
@@ -30,6 +31,8 @@ EPOCHS = 10
 PRETRAIN_EPOCHS = 5
 PRED_THRESHOLD = 0.10
 POST_PRETRAIN_FREEZE_DECODER = True
+USE_SELFIES = False
+TARGET_COL = "selfies" if USE_SELFIES else "canonical_smiles"
 
 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 checkpoint_dir = os.path.join("checkpoints", timestamp)
@@ -74,13 +77,15 @@ ftir_ds = FTIRDataset(FTIR_CSV)
 ftir_ds.load()
 
 mapping = MonomerMapping(PLASTIC_MONOMER_CSV, MONOMERS_PUBCHEM_CSV)
-tokenizer = RDKitSMILESTokenizer()
+# Depending on datatype used
+tokenizer = SELFIESTokenizer() if USE_SELFIES else RDKitSMILESTokenizer()
 
-data_module = FTIRToSMILESDataModule(
+data_module = FTIRToSequenceDataModule(
     ftir_ds=ftir_ds,
     monomer_map=mapping,
     tokenizer=tokenizer,
-    max_len=MAX_LEN
+    max_len=MAX_LEN,
+    use_selfies=USE_SELFIES
 )
 
 X, Y = data_module.build()
@@ -95,7 +100,7 @@ fingerprint_df = fingerprint_df[fingerprint_df["max_tanimoto"] >= 0.60]
 
 fingerprint_df["cactvs_fingerprint"] = fingerprint_df["cactvs_fingerprint"].apply(lambda s: np.array(list(s), dtype=int))
 X_fp = np.stack(fingerprint_df["cactvs_fingerprint"].to_numpy())  # np.array(fingerprint_df['cactvs_fingerprint'], dtype=float)
-Y_fp = np.array(fingerprint_df['canonical_smiles'])
+Y_fp = np.array(fingerprint_df[TARGET_COL])
 
 print(f"Fingerprint dataset shape: X={X_fp.shape}, Y={Y_fp.shape}")
 
@@ -117,7 +122,8 @@ model, (scaler_path, pca_path), training_history, (X_val, Y_val) = train_cross_v
     X_fp=X_fp,
     Y_fp=Y_fp,
     pretrain_epochs=PRETRAIN_EPOCHS,
-    freeze_decoder_after_pretrain=POST_PRETRAIN_FREEZE_DECODER
+    freeze_decoder_after_pretrain=POST_PRETRAIN_FREEZE_DECODER,
+    use_selfies=USE_SELFIES,
 )
 
 # --------------------------
@@ -133,7 +139,7 @@ predictor = FTIRMonomerPredictor(
 
 example_ftir = X_val[0]
 print("Reduced form spectra:", X_val[0])
-predicted_smiles, probs = predictor.predict(example_ftir, PRED_THRESHOLD, debug=True)
-for smile, p in zip(predicted_smiles, probs):
-    print(f"Predicted SMILES (conf={p:5.3f}): {smile}")
-print(f"True SMILES was:  {Y_val[0]}")
+predicted_instances, probs = predictor.predict(example_ftir, PRED_THRESHOLD, debug=True)
+for target_instance, p in zip(predicted_instances, probs):
+    print(f"Predicted Instances (conf={p:5.3f}): {target_instance}")
+print(f"True Instance/-s was/were:  {Y_val[0]}")
