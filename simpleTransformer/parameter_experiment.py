@@ -43,6 +43,8 @@ CONFIGS = [
     (32, 8, 4),
     (48, 8, 4),
 ]
+EXP_NAME = "Basic_model_with_clust"
+PRE_TRAIN = False
 
 DROP_RATE = 0.1
 MAX_LEN = 48
@@ -54,17 +56,7 @@ PRETRAIN_EPOCHS = 25
 def run():
     for d_model, num_heads, num_layers in CONFIGS:
         print("START with:", d_model, num_heads, num_layers)
-        function_train_parameters(d_model, num_heads, num_layers, True)
-
-    SECOND_CONFIG = [
-        (16, 16, 1),
-        (32, 16, 1),
-        (64, 8, 1),
-        (64, 16, 1),
-    ]
-    for d_model, num_heads, num_layers in SECOND_CONFIG:
-        print("START with:", d_model, num_heads, num_layers)
-        function_train_parameters(d_model, num_heads, num_layers, False)
+        function_train_parameters(d_model, num_heads, num_layers, PRE_TRAIN)
 
 
 def function_train_parameters(d_model, num_heads, num_layers, do_pretraining):

@@ -66,7 +66,7 @@ class FTIRToSMILESDataModule:
             scaler = StandardScaler()
             pca = PCA(n_components=self.n_pca)
             kmeans = MiniBatchKMeans(
-                n_clusters=6,
+                n_clusters=7,
                 random_state=0,
                 batch_size=2048,
                 n_init=10

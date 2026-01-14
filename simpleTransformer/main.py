@@ -28,6 +28,7 @@ BATCH_SIZE = 64
 LEARNING_RATE = 1e-3
 EPOCHS = 10
 PRETRAIN_EPOCHS = 5
+PRED_THRESHOLD = 0.10
 
 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 checkpoint_dir = os.path.join("checkpoints", timestamp)
@@ -130,6 +131,7 @@ predictor = FTIRMonomerPredictor(
 
 example_ftir = X_val[0]
 print("Reduced form spectra:", X_val[0])
-predicted_smiles = predictor.predict(example_ftir, debug=True)
-print(f"Predicted SMILES: {predicted_smiles}")
+predicted_smiles, probs = predictor.predict(example_ftir, PRED_THRESHOLD, debug=True)
+for smile, p in zip(predicted_smiles, probs):
+    print(f"Predicted SMILES (conf={p:5.3f}): {smile}")
 print(f"True SMILES was:  {Y_val[0]}")

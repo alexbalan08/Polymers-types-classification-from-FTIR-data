@@ -6,7 +6,7 @@ class FTIREncoder(tf.keras.layers.Layer):
         super().__init__()
         self.is_fp = is_fp
         if is_fp:
-            self.dim_reduction = tf.keras.layers.Dense(206)
+            self.dim_reduction = tf.keras.layers.Dense(207)
 
         self.proj = tf.keras.layers.Dense(d_model)
         self.pos = PositionalEncoding(d_model)
