@@ -18,7 +18,7 @@ import csv
 FTIR_CSV = "data/merged_postprocessed_FTIR.csv"
 PLASTIC_MONOMER_CSV = "data/monomers - plastics to monomers.csv"
 MONOMERS_PUBCHEM_CSV = "data/monomers - Monomers PubChem.csv"
-FINGERPRINT_CSV = "data/filtered_data_40_50_1272421.csv"
+FINGERPRINT_CSV = "data/monomers - Monomers PubChem.csv"
 
 D_MODEL = 32
 NUM_HEADS = 4
@@ -96,7 +96,7 @@ X, Y = data_module.build()
 print("Building fingerprint dataset for pretraining...")
 
 fingerprint_df = pd.read_csv(FINGERPRINT_CSV)
-fingerprint_df = fingerprint_df[fingerprint_df["max_tanimoto"] >= 0.60]
+#fingerprint_df = fingerprint_df[fingerprint_df["max_tanimoto"] >= 0.60]
 
 fingerprint_df["cactvs_fingerprint"] = fingerprint_df["cactvs_fingerprint"].apply(lambda s: np.array(list(s), dtype=int))
 X_fp = np.stack(fingerprint_df["cactvs_fingerprint"].to_numpy())  # np.array(fingerprint_df['cactvs_fingerprint'], dtype=float)

@@ -142,7 +142,7 @@ def train_cross_validation(
                 num_layers=num_layers,
                 dropout=drop_rate
             )
-        else if freeze_decoder_after_pretrain:
+        elif freeze_decoder_after_pretrain:
             # freeze decoder weights
             # optional parameter
             decoder.set_trainable(False)
