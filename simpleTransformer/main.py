@@ -19,8 +19,8 @@ PLASTIC_MONOMER_CSV = "data/monomers - plastics to monomers.csv"
 MONOMERS_PUBCHEM_CSV = "data/monomers - Monomers PubChem.csv"
 FINGERPRINT_CSV = "data/filtered_data_40_50_1272421.csv"
 
-D_MODEL = 32
-NUM_HEADS = 4
+D_MODEL = 48
+NUM_HEADS = 16
 NUM_LAYERS = 2
 DROP_RATE = 0.1
 MAX_LEN = 48
@@ -150,10 +150,11 @@ for xv, yv in zip(X_val, Y_val):
     #     print(f"Predicted SMILES (conf={p:5.3f}): {smile}")
     # print(f"True SMILES was:  {Y_val[0]}")
 
-    store_x = [xv]
-    store_y = [yv]
-    store_pred = [predicted_molecules]
-    store_probs = [probs]
+    store_x.append(xv)
+    store_y.append(yv)
+    store_pred.append(predicted_molecules)
+    store_probs.append(probs)
+print(f"PREDICTION took {time.time()-start_time} seconds")
 
 prediction_df = pd.DataFrame({
     "X_val": store_x,

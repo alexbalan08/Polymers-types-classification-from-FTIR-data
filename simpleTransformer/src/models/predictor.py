@@ -45,33 +45,42 @@ class FTIRMonomerPredictor:
         probabilities = [[]]
         finished = [False]
 
+        max_step = 0
         for step in range(self.max_len):
-            for i in range(len(decoder_input)):
-                if not finished[i]:
-                    # Prepare batch inputs
-                    y_input = np.array([decoder_input[i]], dtype=np.int32)
+            if all(finished):
+                break
+            max_step = step
 
-                    # Forward pass
-                    logits = self.model((x, y_input), training=False).numpy()
-                    if debug:
-                        with np.printoptions(precision=3, suppress=True):
-                            print(logits[0, -1])
+            false_indices = [i for i, v in enumerate(finished) if not v]
 
-                    # Pick next token
-                    # next_token = int(tf.argmax(logits[0, -1]).numpy())
-                    pred_last_token = logits[0, -1]
-                    next_tokens = np.where(pred_last_token > threshold)[0]
-                    next_tokens = next_tokens[np.argsort(pred_last_token[next_tokens])[::-1]].tolist()
-                    next_probs =  pred_last_token[next_tokens].tolist()
-                    if debug:
-                        print(next_tokens)
+            # Prepare batch inputs
+            y_input = [decoder_input[i] for i in false_indices]
+            y_input = np.array(y_input, dtype=np.int32)
+            x_input = tf.repeat(x, repeats=y_input.shape[0], axis=0)
 
-                    if debug:
-                        for next_token, next_prob in zip(next_tokens, next_probs):
-                            token_char = self.tokenizer.id_to_token(next_token)
-                            print(f"Step {step:02d} | Token ID: {next_token:3d} | Token: {token_char:>3} | Prob: {next_prob:>3}")
+            # Forward pass
+            logits = self.model((x_input, y_input), training=False).numpy()
+            if debug:
+                with np.printoptions(precision=3, suppress=True):
+                    print(logits[0, -1])
 
-                    for next_token, next_prob in zip(next_tokens[1:], next_probs[1:]):
+            for h, i in enumerate(false_indices):
+                # Pick next token
+                # next_token = int(tf.argmax(logits[0, -1]).numpy())
+                pred_last_token = logits[h, -1]
+                next_tokens = np.where(pred_last_token > threshold)[0]
+                next_tokens = next_tokens[np.argsort(pred_last_token[next_tokens])[::-1]].tolist()
+                next_probs =  pred_last_token[next_tokens].tolist()
+                if debug:
+                    print(next_tokens)
+
+                if debug:
+                    for next_token, next_prob in zip(next_tokens, next_probs):
+                        token_char = self.tokenizer.id_to_token(next_token)
+                        print(f"Step {step:02d} | Token ID: {next_token:3d} | Token: {token_char:>3} | Prob: {next_prob:>3}")
+
+                for next_token, next_prob in zip(next_tokens[1:], next_probs[1:]):
+                    if len(decoder_input) <= 10:
                         decoder_input.append(decoder_input[i].copy())
                         decodings.append(decodings[i].copy())
                         probabilities.append(probabilities[i].copy())
@@ -83,12 +92,13 @@ class FTIRMonomerPredictor:
                             decoder_input[-1].append(next_token)
                             probabilities[-1].append(next_prob)
 
-                    finished[i] = next_tokens[0] == self.EOS
-                    if not finished[i]:
-                        decodings[i].append(next_tokens[0])
-                        decoder_input[i].append(next_tokens[0])
-                        probabilities[i].append(next_probs[0])
+                finished[i] = next_tokens[0] == self.EOS
+                if not finished[i]:
+                    decodings[i].append(next_tokens[0])
+                    decoder_input[i].append(next_tokens[0])
+                    probabilities[i].append(next_probs[0])
 
+        print("MAX step", max_step)
 
         # Convert token IDs to SMILES string
         smiles = [self.tokenizer.decode(dec) for dec in decodings]
