@@ -10,8 +10,8 @@ from simpleTransformer.src.data.smiles_tokenizer import SMILESTokenizer
 from simpleTransformer.src.training.val_helper import test_cross_validation
 
 # MODEL_PATH = r"basic_2026-01-15_02-38-40"
-MODEL_PATH = r"frozen_2026-01-15_23-21-11"
-# MODEL_PATH = r"selfies_2026-01-15_20-28-13"
+# MODEL_PATH = r"frozen_2026-01-15_23-21-11"
+MODEL_PATH = r"selfies_2026-01-15_20-28-13"
 START_FOLD = 1
 
 # --------------------------
