@@ -24,8 +24,6 @@ FINGERPRINT_CSV = "data/filtered_data_40_50_1272421.csv"
 
 MAX_LEN = 48
 PRED_THRESHOLD = 0.10
-USE_SELFIES = False
-TARGET_COL = "selfies" if USE_SELFIES else "canonical_smiles"
 
 checkpoint_dir = os.path.join("checkpoints", MODEL_PATH)
 
@@ -35,6 +33,8 @@ history_csv_path = os.path.join(checkpoint_dir, "training_history.csv")
 
 df = pd.read_csv(config_csv_path)
 config = df.iloc[0].to_dict()
+USE_SELFIES = config["USE_SELFIES"]
+TARGET_COL = "selfies" if USE_SELFIES else "canonical_smiles"
 
 # --------------------------
 # 1. Load dataset
